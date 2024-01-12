@@ -100,7 +100,7 @@ int rmkdir(const char *pathname) {
     temp->dirents = NULL;
     temp->content = NULL;
     temp->nrde = 0;
-    temp->name = directions[0];
+    temp->name = directions[count - 1];
     temp->size = 0;
 
     if (count == 1) { //root
