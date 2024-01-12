@@ -9,10 +9,10 @@ const char *ct = "export PATH=/home:$PATH";
 int main() {
   init_ramfs();
 
-  smkdir("/home");
-  smkdir("/home/ubuntu");
-  smkdir("/usr");
-  smkdir("/usr/bin");
+  rmkdir("/home");
+  rmkdir("/home/ubuntu");
+  rmkdir("/usr");
+  rmkdir("/usr/bin");
   stouch("/home/ubuntu/.bashrc");
   rwrite(ropen("/home/ubuntu/.bashrc", O_WRONLY), content, strlen(content));
   rwrite(ropen("/home/ubuntu/.bashrc", O_WRONLY | O_APPEND), ct, strlen(ct));
