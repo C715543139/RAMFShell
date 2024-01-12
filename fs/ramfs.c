@@ -20,11 +20,13 @@ node *find(const char *pathname) {
     char *directions[2048];
     int count = 0;
     p = q = &pathname[1];
-    while (*p != '0'){
+    while (*p != 0){
         while (*p != '/' && *p != 0)p++;
         char *temp_dir = malloc(p - q + 1);
         strncpy(temp_dir,q,p - q);
         directions[count++] = temp_dir;
+        p++;
+        q = p;
     }
 
     for (int i = 0; i < count; ++i) {
@@ -78,11 +80,13 @@ int rmkdir(const char *pathname) {
     char *directions[2048];
     int count = 0;
     p = q = &pathname[1];
-    while (*p != '0'){
+    while (*p != 0){
         while (*p != '/' && *p != 0)p++;
         char *temp_dir = malloc(p - q + 1);
         strncpy(temp_dir,q,p - q);
         directions[count++] = temp_dir;
+        p++;
+        q = p;
     }
 
     node *temp = malloc(sizeof(node));
