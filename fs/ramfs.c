@@ -7,19 +7,62 @@
 
 node *root = NULL;
 
+#define MAX_LEN (4096 + 1)
 #define NRFD 4096
 FD fdesc[NRFD];
+
+void reduce_slashes(const char *input, char *output) {
+    int i, j = 0;
+    for (i = 0; input[i] != 0; ++i) {
+        if (input[i] == '/' && input[i + 1] == '/')
+            continue;
+        output[j++] = input[i];
+    }
+    output[j] = 0;
+}
+
+node* find_file_all(node* root, const char* name) {
+    if (strcmp(root->name, name) == 0) {
+        return root;
+    }
+
+    if (root->type == DNODE) {
+        for (int i = 0; i < root->nrde; ++i) {
+            node *found = find_file_all(root->dirents[i], name);
+            if (found != NULL) {
+                return found;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+bool find_file_now(node* now, const char* name) {
+    if (now->type == DNODE) {
+        for (int i = 0; i < now->nrde; ++i) {
+            if(strcmp(now->dirents[i]->name,name) == 0){
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
 
 node *find(const char *pathname) {
     if (pathname == NULL)return NULL;
 
-    if (strcmp("/", pathname) == 0)return root;
+    char *pathname_simple = malloc(MAX_LEN * sizeof(char)); //reduce slashes
+    reduce_slashes(pathname,pathname_simple);
+
+    if (strcmp("/", pathname_simple) == 0)return root;
 
     node *now = root;
     const char *p, *q;
-    char *directions[2048];
+    char *directions[MAX_LEN];
     int count = 0;
-    p = q = &pathname[1];
+    p = q = &pathname_simple[1];
     while (true) {
         while (*p != '/' && *p != 0)p++;
         char *temp_dir = malloc(p - q + 1);
@@ -74,13 +117,21 @@ off_t rseek(int fd, off_t offset, int whence) {
 
 }
 
-int rmkdir(const char *pathname) {
-    if (pathname == NULL || strcmp("/", pathname) == 0) return -1;
+int rmkdir(const char *pathname) { //no error dealing
+    if (pathname == NULL) return -1;
+
+    char *pathname_simple = malloc(MAX_LEN * sizeof(char)); //reduce slashes
+    reduce_slashes(pathname,pathname_simple);
+
+    if (find(pathname_simple) == root) { //eexist
+        free(pathname_simple);
+        return -1;
+    }
 
     const char *p, *q;
     char *directions[2048];
     int count = 0;
-    p = q = &pathname[1];
+    p = q = &pathname_simple[1];
     while (true) {
         while (*p != '/' && *p != 0)p++;
         char *temp_dir = malloc(p - q + 1);
@@ -91,9 +142,17 @@ int rmkdir(const char *pathname) {
         q = p;
     }
 
+    for (int i = 0;directions[count - 1][i] != 0; ++i) { //einval
+        if(isalnum(directions[count - 1][i]) == 0 && directions[count - 1][i] != '.'){
+            free(pathname_simple);
+            return -1;
+        }
+    }
+
     node *temp = malloc(sizeof(node));
     if (temp == NULL) {
         for (int i = 0; i < count; ++i) free(directions[i]);
+        free(pathname_simple);
         return -1;
     }
     temp->type = DNODE;
@@ -103,34 +162,60 @@ int rmkdir(const char *pathname) {
     temp->name = directions[count - 1];
     temp->size = 0;
 
-    if (count == 1) { //root
+    if (count == 1) { //below root
+        if(find_file_now(root,temp->name)){ //eexist
+            for (int i = 0; i < count; ++i) free(directions[i]);
+            free(pathname_simple);
+            free(temp);
+            return -1;
+        }
+
         root->nrde++;
         root->dirents = realloc(root->dirents, root->nrde * sizeof(node));
         if (root->dirents == NULL) {
             for (int i = 0; i < count; ++i) free(directions[i]);
+            free(pathname_simple);
+            free(temp);
             return -1;
         }
         root->dirents[root->nrde - 1] = temp;
 
     } else {
-        char *up_dir_name = malloc(1 + strlen(pathname));
-        strcpy(up_dir_name, pathname);
-        up_dir_name[strlen(pathname) - strlen(directions[count - 1]) - 1] = 0;
+        char *up_dir_name = malloc(1 + strlen(pathname_simple));
+        strcpy(up_dir_name, pathname_simple);
+        up_dir_name[strlen(pathname_simple) - strlen(directions[count - 1]) - 1] = 0;
         node *up_dir = find(up_dir_name);
 
-        if (up_dir->type == FNODE) {
+        if (up_dir == NULL || up_dir->type == FNODE) {//enoent or enotdir
             for (int i = 0; i < count; ++i) free(directions[i]);
             free(up_dir_name);
+            free(pathname_simple);
+            free(temp);
             return -1;
         }
+
+        if(find_file_now(up_dir,temp->name)){ //eexist
+            for (int i = 0; i < count; ++i) free(directions[i]);
+            free(pathname_simple);
+            free(temp);
+            return -1;
+        }
+
         up_dir->nrde++;
         up_dir->dirents = realloc(up_dir->dirents, up_dir->nrde * sizeof(node));
+
         if (up_dir->dirents == NULL) {
             for (int i = 0; i < count; ++i) free(directions[i]);
+            free(pathname_simple);
+            free(temp);
             return -1;
         }
+
         up_dir->dirents[up_dir->nrde - 1] = temp;
     }
+
+    for (int i = 0; i < count; ++i) free(directions[i]);
+    free(pathname_simple);
     return 0;
 }
 
