@@ -11,6 +11,12 @@ node *root = NULL;
 #define NRFD 4096
 FD fdesc[NRFD];
 
+char *strdup(const char *content){
+    char *new = malloc(strlen(content) + 1);
+    strcpy(new,content);
+    return new;
+}
+
 void reduce_slashes(const char *input, char *output) {
     int i, j = 0;
     for (i = 0; input[i] != 0; ++i) {
@@ -159,7 +165,7 @@ int rmkdir(const char *pathname) { //no error dealing
     temp->dirents = NULL;
     temp->content = NULL;
     temp->nrde = 0;
-    temp->name = directions[count - 1];
+    temp->name = strdup(directions[count - 1]);
     temp->size = 0;
 
     if (count == 1) { //below root
