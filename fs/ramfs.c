@@ -71,7 +71,7 @@ node *find(const char *pathname) {
     p = q = &pathname_simple[1];
     while (true) {
         while (*p != '/' && *p != 0)p++;
-        char *temp_dir = malloc((p - q + 1) * sizeof(char));
+        char *temp_dir = calloc(p - q + 1,(p - q + 1) * sizeof(char));
         strncpy(temp_dir, q, p - q);
         directions[count++] = temp_dir;
         if (*p == 0)break;
@@ -140,7 +140,7 @@ int rmkdir(const char *pathname) { //no error dealing
     p = q = &pathname_simple[1];
     while (true) {
         while (*p != '/' && *p != 0)p++;
-        char *temp_dir = malloc((p - q + 1) * sizeof(char));
+        char *temp_dir = calloc(p - q + 1,(p - q + 1) * sizeof(char));
         strncpy(temp_dir, q, p - q);
         directions[count++] = temp_dir;
         if (*p == 0)break;
@@ -172,6 +172,7 @@ int rmkdir(const char *pathname) { //no error dealing
         if(find_file_now(root,temp->name)){ //eexist
             for (int i = 0; i < count; ++i) free(directions[i]);
             free(pathname_simple);
+            free(temp->name);
             free(temp);
             return -1;
         }
@@ -181,6 +182,7 @@ int rmkdir(const char *pathname) { //no error dealing
         if (root->dirents == NULL) {
             for (int i = 0; i < count; ++i) free(directions[i]);
             free(pathname_simple);
+            free(temp->name);
             free(temp);
             return -1;
         }
@@ -196,6 +198,7 @@ int rmkdir(const char *pathname) { //no error dealing
             for (int i = 0; i < count; ++i) free(directions[i]);
             free(up_dir_name);
             free(pathname_simple);
+            free(temp->name);
             free(temp);
             return -1;
         }
@@ -203,6 +206,7 @@ int rmkdir(const char *pathname) { //no error dealing
         if(find_file_now(up_dir,temp->name)){ //eexist
             for (int i = 0; i < count; ++i) free(directions[i]);
             free(pathname_simple);
+            free(temp->name);
             free(temp);
             return -1;
         }
@@ -213,6 +217,7 @@ int rmkdir(const char *pathname) { //no error dealing
         if (up_dir->dirents == NULL) {
             for (int i = 0; i < count; ++i) free(directions[i]);
             free(pathname_simple);
+            free(temp->name);
             free(temp);
             return -1;
         }
