@@ -119,13 +119,13 @@ int ropen(const char *pathname, int flags) {
         if(rw == 0) rw = 2;
     }
 
-    char *pathname_simple = malloc(MAX_LEN * sizeof(char)); //reduce slashes
-    reduce_slashes(pathname, pathname_simple);
-
     node *file = find(pathname);
 
     if (file == NULL) {
         if (create == true) { //create
+            char *pathname_simple = malloc(MAX_LEN * sizeof(char)); //reduce slashes
+            reduce_slashes(pathname, pathname_simple);
+
             const char *p, *q;
             char *directions[2048];
             int count = 0;
@@ -199,11 +199,11 @@ int ropen(const char *pathname, int flags) {
                 }
 
                 up_dir->dirents[up_dir->nrde - 1] = temp;
+                temp->upper = up_dir;
             }
             for (int i = 0; i < count; ++i) free(directions[i]);
             file = temp;
         } else{
-            free(pathname_simple);
             return -1;
         }
     }
@@ -225,8 +225,6 @@ int ropen(const char *pathname, int flags) {
     fdesc[fdesc_count].used = true;
     fdesc[fdesc_count].flags = flags;
     fdesc[fdesc_count++].f = file;
-
-    free(pathname_simple);
 
     return fdesc_count - 1;
 }
