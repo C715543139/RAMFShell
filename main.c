@@ -16,6 +16,8 @@ int main() {
     assert(rmkdir("/home/ubuntu") == 0);
     assert(rmkdir("/usr") == 0);
     assert(rmkdir("/usr/bin") == 0);
+    assert(ropen("/home///ubuntu//.bashrc", O_CREAT | O_WRONLY) == 0);
+    int fd = ropen("/home/ubuntu/.bashrc", O_RDONLY);
     stouch("/home/ubuntu/.bashrc");
     rwrite(ropen("/home/ubuntu/.bashrc", O_WRONLY), content, strlen(content));
     rwrite(ropen("/home/ubuntu/.bashrc", O_WRONLY | O_APPEND), ct, strlen(ct));

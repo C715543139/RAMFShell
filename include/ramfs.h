@@ -20,6 +20,7 @@ typedef struct node {
   int nrde;
   char *name;
   int size;
+  struct node *upper;
 } node;
 
 typedef struct FD {

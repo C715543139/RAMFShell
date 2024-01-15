@@ -10,10 +10,11 @@ node *root = NULL;
 #define MAX_LEN (4096 + 1)
 #define NRFD 4096
 FD fdesc[NRFD];
+int fdesc_count = 0;
 
-char *strdup(const char *content){
+char *strdup(const char *content) {
     char *new = malloc(strlen(content) + 1);
-    strcpy(new,content);
+    strcpy(new, content);
     return new;
 }
 
@@ -27,14 +28,14 @@ void reduce_slashes(const char *input, char *output) {
     output[j] = 0;
 }
 
-node* find_file_all(node* root, const char* name) {
-    if (strcmp(root->name, name) == 0) {
-        return root;
+node *find_file_all(node *now, const char *name) {
+    if (strcmp(now->name, name) == 0) {
+        return now;
     }
 
-    if (root->type == DNODE) {
-        for (int i = 0; i < root->nrde; ++i) {
-            node *found = find_file_all(root->dirents[i], name);
+    if (now->type == DNODE) {
+        for (int i = 0; i < now->nrde; ++i) {
+            node *found = find_file_all(now->dirents[i], name);
             if (found != NULL) {
                 return found;
             }
@@ -44,10 +45,10 @@ node* find_file_all(node* root, const char* name) {
     return NULL;
 }
 
-bool find_file_now(node* now, const char* name) {
+bool find_file_below(node *now, const char *name) {
     if (now->type == DNODE) {
         for (int i = 0; i < now->nrde; ++i) {
-            if(strcmp(now->dirents[i]->name,name) == 0){
+            if (strcmp(now->dirents[i]->name, name) == 0) {
                 return true;
             }
         }
@@ -60,7 +61,7 @@ node *find(const char *pathname) {
     if (pathname == NULL)return NULL;
 
     char *pathname_simple = malloc(MAX_LEN * sizeof(char)); //reduce slashes
-    reduce_slashes(pathname,pathname_simple);
+    reduce_slashes(pathname, pathname_simple);
 
     if (strcmp("/", pathname_simple) == 0)return root;
 
@@ -71,7 +72,7 @@ node *find(const char *pathname) {
     p = q = &pathname_simple[1];
     while (true) {
         while (*p != '/' && *p != 0)p++;
-        char *temp_dir = calloc(p - q + 1,(p - q + 1) * sizeof(char));
+        char *temp_dir = calloc(p - q + 1, (p - q + 1) * sizeof(char));
         strncpy(temp_dir, q, p - q);
         directions[count++] = temp_dir;
         if (*p == 0)break;
@@ -103,8 +104,131 @@ node *find(const char *pathname) {
     return now;
 }
 
-int ropen(const char *pathname, int flags) {
 
+int ropen(const char *pathname, int flags) {
+    if (pathname == NULL) return -1;
+
+    bool append = false, create = false, trunc = false;
+    int rw = 0; //rdonly 0,wronly 1,rdwr 2
+    if (flags & O_APPEND) append = true;
+    if (flags & O_CREAT) create = true;
+    if (flags & O_TRUNC) trunc = true;
+    if ((flags & O_RDONLY) == O_RDONLY) rw = 0;
+    if ((flags & O_WRONLY) == O_WRONLY) rw = 1;
+    if ((flags & O_RDWR) == O_RDWR) {
+        if(rw == 0) rw = 2;
+    }
+
+    char *pathname_simple = malloc(MAX_LEN * sizeof(char)); //reduce slashes
+    reduce_slashes(pathname, pathname_simple);
+
+    node *file = find(pathname);
+
+    if (file == NULL) {
+        if (create == true) { //create
+            const char *p, *q;
+            char *directions[2048];
+            int count = 0;
+            p = q = &pathname_simple[1];
+            while (true) {
+                while (*p != '/' && *p != 0)p++;
+                char *temp_dir = calloc(p - q + 1, (p - q + 1) * sizeof(char));
+                strncpy(temp_dir, q, p - q);
+                directions[count++] = temp_dir;
+                if (*p == 0)break;
+                p++;
+                q = p;
+            }
+
+            for (int i = 0; directions[count - 1][i] != 0; ++i) { //einval
+                if (isalnum(directions[count - 1][i]) == 0 && directions[count - 1][i] != '.') {
+                    free(pathname_simple);
+                    return -1;
+                }
+            }
+
+            node *temp = malloc(sizeof(node));
+            file = temp;
+            if (temp == NULL) {
+                for (int i = 0; i < count; ++i) free(directions[i]);
+                free(pathname_simple);
+                return -1;
+            }
+            temp->type = FNODE;
+            temp->dirents = NULL;
+            temp->content = NULL;
+            temp->nrde = 0;
+            temp->name = strdup(directions[count - 1]);
+            temp->size = 0;
+
+            if (count == 1) { //below root
+                root->nrde++;
+                root->dirents = realloc(root->dirents, root->nrde * sizeof(node));
+                if (root->dirents == NULL) {
+                    for (int i = 0; i < count; ++i) free(directions[i]);
+                    free(pathname_simple);
+                    free(temp->name);
+                    free(temp);
+                    return -1;
+                }
+                root->dirents[root->nrde - 1] = temp;
+
+            } else {
+                char *up_dir_name = malloc(1 + strlen(pathname_simple));
+                strcpy(up_dir_name, pathname_simple);
+                up_dir_name[strlen(pathname_simple) - strlen(directions[count - 1]) - 1] = 0;
+                node *up_dir = find(up_dir_name);
+
+                if (up_dir == NULL || up_dir->type == FNODE) {//enoent or enotdir
+                    for (int i = 0; i < count; ++i) free(directions[i]);
+                    free(up_dir_name);
+                    free(pathname_simple);
+                    free(temp->name);
+                    free(temp);
+                    return -1;
+                }
+
+                up_dir->nrde++;
+                up_dir->dirents = realloc(up_dir->dirents, up_dir->nrde * sizeof(node));
+                if (up_dir->dirents == NULL) {
+                    for (int i = 0; i < count; ++i) free(directions[i]);
+                    free(pathname_simple);
+                    free(temp->name);
+                    free(temp);
+                    return -1;
+                }
+
+                up_dir->dirents[up_dir->nrde - 1] = temp;
+            }
+            for (int i = 0; i < count; ++i) free(directions[i]);
+            file = temp;
+        } else{
+            free(pathname_simple);
+            return -1;
+        }
+    }
+
+    if(append){ //offset
+        fdesc[fdesc_count].offset = file->size;
+    } else{
+        fdesc[fdesc_count].offset = 0;
+    }
+
+    if(trunc && rw != 0){
+        if (file->content != NULL) {
+            free(file->content);
+            file->content = NULL;
+            file->size = 0;
+        }
+    }
+
+    fdesc[fdesc_count].used = true;
+    fdesc[fdesc_count].flags = flags;
+    fdesc[fdesc_count++].f = file;
+
+    free(pathname_simple);
+
+    return fdesc_count - 1;
 }
 
 int rclose(int fd) {
@@ -127,7 +251,7 @@ int rmkdir(const char *pathname) { //no error dealing
     if (pathname == NULL) return -1;
 
     char *pathname_simple = malloc(MAX_LEN * sizeof(char)); //reduce slashes
-    reduce_slashes(pathname,pathname_simple);
+    reduce_slashes(pathname, pathname_simple);
 
     if (find(pathname_simple) == root) { //eexist
         free(pathname_simple);
@@ -140,7 +264,7 @@ int rmkdir(const char *pathname) { //no error dealing
     p = q = &pathname_simple[1];
     while (true) {
         while (*p != '/' && *p != 0)p++;
-        char *temp_dir = calloc(p - q + 1,(p - q + 1) * sizeof(char));
+        char *temp_dir = calloc(p - q + 1, (p - q + 1) * sizeof(char));
         strncpy(temp_dir, q, p - q);
         directions[count++] = temp_dir;
         if (*p == 0)break;
@@ -148,8 +272,8 @@ int rmkdir(const char *pathname) { //no error dealing
         q = p;
     }
 
-    for (int i = 0;directions[count - 1][i] != 0; ++i) { //einval
-        if(isalnum(directions[count - 1][i]) == 0 && directions[count - 1][i] != '.'){
+    for (int i = 0; directions[count - 1][i] != 0; ++i) { //einval
+        if (isalnum(directions[count - 1][i]) == 0 && directions[count - 1][i] != '.') {
             free(pathname_simple);
             return -1;
         }
@@ -169,7 +293,7 @@ int rmkdir(const char *pathname) { //no error dealing
     temp->size = 0;
 
     if (count == 1) { //below root
-        if(find_file_now(root,temp->name)){ //eexist
+        if (find_file_below(root, temp->name)) { //eexist
             for (int i = 0; i < count; ++i) free(directions[i]);
             free(pathname_simple);
             free(temp->name);
@@ -187,6 +311,7 @@ int rmkdir(const char *pathname) { //no error dealing
             return -1;
         }
         root->dirents[root->nrde - 1] = temp;
+        temp->upper = root;
 
     } else {
         char *up_dir_name = malloc(1 + strlen(pathname_simple));
@@ -203,7 +328,7 @@ int rmkdir(const char *pathname) { //no error dealing
             return -1;
         }
 
-        if(find_file_now(up_dir,temp->name)){ //eexist
+        if (find_file_below(up_dir, temp->name)) { //eexist
             for (int i = 0; i < count; ++i) free(directions[i]);
             free(pathname_simple);
             free(temp->name);
@@ -223,6 +348,7 @@ int rmkdir(const char *pathname) { //no error dealing
         }
 
         up_dir->dirents[up_dir->nrde - 1] = temp;
+        temp->upper = up_dir;
     }
 
     for (int i = 0; i < count; ++i) free(directions[i]);
@@ -235,7 +361,35 @@ int rrmdir(const char *pathname) {
 }
 
 int runlink(const char *pathname) {
+    if (pathname == NULL) return -1;
 
+    node *temp = find(pathname);
+    if (temp == NULL) {//enoent
+        return -1;
+    } else {
+        if (temp->type == DNODE) {//eisdir
+            return -1;
+        }
+    }
+
+    node *upper = temp->upper;
+    int location = 0;
+    for (int i = 0; i < upper->nrde; ++i) {
+        if (strcmp(upper->dirents[i]->name, temp->name) == 0) {
+            free(temp->name);
+            if (temp->content != NULL) {
+                free(temp->content);
+            }
+            free(upper->dirents[i]);
+            location = i;
+            break;
+        }
+    }
+    for (int i = location; i < upper->nrde - location - 1; ++i) {//move
+        upper->dirents[i] = upper->dirents[i + 1];
+    }
+    upper->nrde--;
+    return 0;
 }
 
 void init_ramfs() {
