@@ -272,6 +272,7 @@ ssize_t rwrite(int fd, const void *buf, size_t count) {
         if(fdesc[fd].offset > fdesc[fd].f->size){
             memset((char *)fdesc[fd].f->content + fdesc[fd].f->size,0,count + fdesc[fd].offset - fdesc[fd].f->size);
         }
+        fdesc[fd].f->size = count + fdesc[fd].offset;
     }
 
     memcpy((char *)fdesc[fd].f->content + fdesc[fd].offset,buf,count);
