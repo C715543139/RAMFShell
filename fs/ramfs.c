@@ -276,6 +276,7 @@ ssize_t rwrite(int fd, const void *buf, size_t count) {
     }
 
     memcpy((char *)fdesc[fd].f->content + fdesc[fd].offset,buf,count);
+    fdesc[fd].offset += count;
     return count;
 }
 
@@ -300,9 +301,11 @@ ssize_t rread(int fd, void *buf, size_t count) {
 
     if(count + fdesc[fd].offset <= fdesc[fd].f->size){
         memcpy(buf,(char *)fdesc[fd].f->content + fdesc[fd].offset,count);
+        fdesc[fd].offset += count;
         return count;
     } else{
         memcpy(buf,(char *)fdesc[fd].f->content + fdesc[fd].offset,fdesc[fd].f->size - fdesc[fd].offset);
+        fdesc[fd].offset = fdesc[fd].f->size;
         return fdesc[fd].f->size - fdesc[fd].offset;
     }
 }
