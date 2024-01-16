@@ -23,16 +23,16 @@ typedef struct node {
   struct node *upper;
 } node;
 
-typedef struct FD {
-  bool used;
-  int offset;
-  int flags;
-  node *f;
-} FD;
-
 typedef intptr_t ssize_t;
 typedef uintptr_t size_t;
 typedef long off_t;
+
+typedef struct FD {
+    bool used;
+    off_t offset;
+    int flags;
+    node *f;
+} FD;
 
 int ropen(const char *pathname, int flags);
 int rclose(int fd);
