@@ -9,6 +9,8 @@
 #include <string.h>
 #include <stdbool.h>
 
+path *head,*tail;
+
 int sls(const char *pathname) {
   print("ls %s\n", pathname);
 
@@ -40,6 +42,11 @@ int swhich(const char *cmd) {
 }
 
 void init_shell() {
+    //read .bashrc
+    head = tail = NULL;
+
+
+
 
 }
 
