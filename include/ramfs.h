@@ -34,6 +34,10 @@ typedef struct FD {
     node *f;
 } FD;
 
+enum {
+    ENOTDIR,EEXIST,SUCCESS
+} find_flags;
+
 int ropen(const char *pathname, int flags);
 int rclose(int fd);
 ssize_t rwrite(int fd, const void *buf, size_t count);

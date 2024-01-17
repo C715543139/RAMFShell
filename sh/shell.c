@@ -15,11 +15,44 @@ long PATH_LEN = 0;
 int sls(const char *pathname) {
   print("ls %s\n", pathname);
 
+  node *dir = find(pathname);
+  if(dir == NULL){
+      if(find_flags == EEXIST){
+          printf("ls: cannot access '%s': No such file or directory\\n",pathname);
+      } else if(find_flags == ENOTDIR){
+          printf("ls: cannot access '%s': Not a directory\\n",pathname);
+      }
+      return 1;
+  }
+
+    for (int i = 0; i < dir->nrde; ++i) {
+        printf("%s ",dir->dirents[i]->name);
+    }
+    printf("\n");
+    return 0;
 }
 
 int scat(const char *pathname) {
   print("cat %s\n", pathname);
 
+    node *file = find(pathname);
+    if(file == NULL){
+        if(find_flags == EEXIST){
+            printf("ls: cannot access '%s': No such file or directory\\n",pathname);
+        } else if(find_flags == ENOTDIR){
+            printf("ls: cannot access '%s': Not a directory\\n",pathname);
+        }
+        return 1;
+    } else if(file->type == DNODE){
+        printf("cat: %s: Is a directory\\n",pathname);
+        return 1;
+    }
+
+    for (int i = 0; i < file->size; ++i) {
+        printf("%c", ((char *)(file->content))[i]);
+    }
+    printf("\n");
+    return 0;
 }
 
 int smkdir(const char *pathname) {
@@ -123,5 +156,6 @@ void init_shell() {
 }
 
 void close_shell() {
-
+    free(PATH);
+    PATH = NULL;
 }

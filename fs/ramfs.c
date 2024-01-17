@@ -63,7 +63,10 @@ node *find(const char *pathname) {
     char *pathname_simple = malloc(MAX_LEN * sizeof(char)); //reduce slashes
     reduce_slashes(pathname, pathname_simple);
 
-    if (strcmp("/", pathname_simple) == 0)return root;
+    if (strcmp("/", pathname_simple) == 0){
+        find_flags = SUCCESS;
+        return root;
+    }
 
     node *now = root;
     const char *p, *q;
@@ -81,8 +84,13 @@ node *find(const char *pathname) {
     }
 
     for (int i = 0; i < count; ++i) {
-        if (now->type == FNODE || now->nrde == 0) {
+        if (now->type == FNODE) {
             for (int j = 0; j < count; ++j) free(directions[j]);
+            find_flags = ENOTDIR;
+            return NULL;
+        } else if(now->nrde == 0){
+            for (int j = 0; j < count; ++j) free(directions[j]);
+            find_flags = EEXIST;
             return NULL;
         }
 
@@ -96,11 +104,13 @@ node *find(const char *pathname) {
         }
         if (found == false) {
             for (int j = 0; j < count; ++j) free(directions[j]);
+            find_flags = EEXIST;
             return NULL;
         }
     }
 
     for (int i = 0; i < count; ++i) free(directions[i]);
+    find_flags = SUCCESS;
     return now;
 }
 
