@@ -1,10 +1,5 @@
 #pragma once
 
-typedef struct path{
-    char *pathname;
-    struct path *next;
-}path;
-
 int sls(const char *pathname);
 int scat(const char *pathname);
 int smkdir(const char *pathname);
