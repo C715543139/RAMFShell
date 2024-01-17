@@ -117,7 +117,7 @@ int secho(const char *content) {
             i += 5;
         } else printf("%c",content[i]);
     }
-    if (content[len - 2] != '\\')printf("%c",content[len - 1]);
+    if (content[len - 2] != '\\' && content[len - 5] != '$')printf("%c",content[len - 1]);
     printf("\n");
     return 0;
 }
