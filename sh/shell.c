@@ -18,7 +18,7 @@ int sls(const char *pathname) {
 
     node *dir = find(pathname);
     if (dir == NULL) {
-        if (check_status() == 1) {
+        if (check_status() == 2) {
             printf("ls: cannot access '%s': No such file or directory\n", pathname);
         } else if (check_status() == 0) {
             printf("ls: cannot access '%s': Not a directory\n", pathname);
