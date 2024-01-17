@@ -1,9 +1,11 @@
 #include "ramfs.h"
 #include "shell.h"
-
 #ifndef ONLINE_JUDGE
 #define print(...) printf("\033[31m");printf(__VA_ARGS__);printf("\033[0m");
+#else
+#define print(...)
 #endif
+
 
 #include <stdio.h>
 #include <stdlib.h>
