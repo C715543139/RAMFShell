@@ -12,6 +12,14 @@ node *root = NULL;
 #define NRFD 4096
 FD fdesc[NRFD];
 
+enum {
+    ENOTDIR,EEXIST,SUCCESS //0,1,2
+} find_flags;
+
+int find_status(){
+    return find_flags;
+}
+
 char *strdup(const char *content) {
     char *new = malloc(strlen(content) + 1);
     strcpy(new, content);

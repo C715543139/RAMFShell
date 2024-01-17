@@ -34,10 +34,8 @@ typedef struct FD {
     node *f;
 } FD;
 
-enum {
-    ENOTDIR,EEXIST,SUCCESS
-} find_flags;
-
+int find_status();
+void reduce_slashes(const char *input, char *output);
 int ropen(const char *pathname, int flags);
 int rclose(int fd);
 ssize_t rwrite(int fd, const void *buf, size_t count);

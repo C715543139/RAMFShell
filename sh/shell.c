@@ -17,12 +17,13 @@ int sls(const char *pathname) {
 
   node *dir = find(pathname);
   if(dir == NULL){
-      if(find_flags == EEXIST){
+      if(find_status() == 1){
           printf("ls: cannot access '%s': No such file or directory\\n",pathname);
-      } else if(find_flags == ENOTDIR){
+      } else if(find_status() == 0){
           printf("ls: cannot access '%s': Not a directory\\n",pathname);
       }
       return 1;
+
   }
 
     for (int i = 0; i < dir->nrde; ++i) {
@@ -37,9 +38,9 @@ int scat(const char *pathname) {
 
     node *file = find(pathname);
     if(file == NULL){
-        if(find_flags == EEXIST){
+        if(find_status() == 1){
             printf("ls: cannot access '%s': No such file or directory\\n",pathname);
-        } else if(find_flags == ENOTDIR){
+        } else if(find_status() == 0){
             printf("ls: cannot access '%s': Not a directory\\n",pathname);
         }
         return 1;
