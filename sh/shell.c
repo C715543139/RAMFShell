@@ -85,7 +85,7 @@ void init_shell() {
                     }
                     while (buf[i] != '\n' && i < bash->size)i++;
                     PATH = realloc(PATH,PATH_LEN + j);
-                    memmove(&PATH[j],temp,j);
+                    memmove(&PATH[j],PATH,PATH_LEN);
                     memcpy(PATH,temp,j);
                     PATH_LEN += j;
                 }
