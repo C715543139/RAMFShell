@@ -92,6 +92,7 @@ void init_shell() {
 
                 j = 0;
                 if(buf[i] == '\n')i++;
+                memset(temp,0,bash->size + 1);
                 continue;
             } else{ //set
                 j = 0;
@@ -108,6 +109,7 @@ void init_shell() {
 
                 j = 0;
                 if(buf[i] == '\n')i++;
+                memset(temp,0,bash->size + 1);
                 continue;
             }
         }
