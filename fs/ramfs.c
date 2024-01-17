@@ -13,11 +13,11 @@ node *root = NULL;
 FD fdesc[NRFD];
 
 enum {
-    ENOTDIR,EEXIST,SUCCESS //0,1,2
-} find_flags;
+    ENOTDIR,EEXIST,ENOENT //0,1,2
+} status;
 
-int find_status(){
-    return find_flags;
+int check_status(){
+    return status;
 }
 
 char *strdup(const char *content) {
@@ -34,23 +34,6 @@ void reduce_slashes(const char *input, char *output) {
         output[j++] = input[i];
     }
     output[j] = 0;
-}
-
-node *find_file_all(node *now, const char *name) {
-    if (strcmp(now->name, name) == 0) {
-        return now;
-    }
-
-    if (now->type == DNODE) {
-        for (int i = 0; i < now->nrde; ++i) {
-            node *found = find_file_all(now->dirents[i], name);
-            if (found != NULL) {
-                return found;
-            }
-        }
-    }
-
-    return NULL;
 }
 
 bool find_file_below(node *now, const char *name) {
@@ -72,7 +55,6 @@ node *find(const char *pathname) {
     reduce_slashes(pathname, pathname_simple);
 
     if (strcmp("/", pathname_simple) == 0){
-        find_flags = SUCCESS;
         return root;
     }
 
@@ -86,7 +68,7 @@ node *find(const char *pathname) {
         char *temp_dir = calloc(p - q + 1, (p - q + 1) * sizeof(char));
         strncpy(temp_dir, q, p - q);
         directions[count++] = temp_dir;
-        if (*p == 0)break;
+        if ((*p == 0) || (*p == '/' && *(p + 1) == 0))break;
         p++;
         q = p;
     }
@@ -94,11 +76,11 @@ node *find(const char *pathname) {
     for (int i = 0; i < count; ++i) {
         if (now->type == FNODE) {
             for (int j = 0; j < count; ++j) free(directions[j]);
-            find_flags = ENOTDIR;
+            status = ENOTDIR;
             return NULL;
         } else if(now->nrde == 0){
             for (int j = 0; j < count; ++j) free(directions[j]);
-            find_flags = EEXIST;
+            status = ENOENT;
             return NULL;
         }
 
@@ -112,13 +94,12 @@ node *find(const char *pathname) {
         }
         if (found == false) {
             for (int j = 0; j < count; ++j) free(directions[j]);
-            find_flags = EEXIST;
+            status = ENOENT;
             return NULL;
         }
     }
 
     for (int i = 0; i < count; ++i) free(directions[i]);
-    find_flags = SUCCESS;
     return now;
 }
 
@@ -161,6 +142,7 @@ int ropen(const char *pathname, int flags) {
             for (int i = 0; directions[count - 1][i] != 0; ++i) { //einval
                 if (isalnum(directions[count - 1][i]) == 0 && directions[count - 1][i] != '.') {
                     free(pathname_simple);
+                    status = ENOENT;
                     return -1;
                 }
             }
@@ -197,6 +179,11 @@ int ropen(const char *pathname, int flags) {
                 node *up_dir = find(up_dir_name);
 
                 if (up_dir == NULL || up_dir->type == FNODE) {//enoent or enotdir
+                    if(up_dir == NULL){
+                        status = ENOENT;
+                    } else{
+                        status = ENOTDIR;
+                    }
                     for (int i = 0; i < count; ++i) free(directions[i]);
                     free(up_dir_name);
                     free(pathname_simple);
@@ -366,6 +353,7 @@ int rmkdir(const char *pathname) {
 
     if (find(pathname_simple) == root) { //eexist
         free(pathname_simple);
+        status = EEXIST;
         return -1;
     }
 
@@ -386,6 +374,7 @@ int rmkdir(const char *pathname) {
     for (int i = 0; directions[count - 1][i] != 0; ++i) { //einval
         if (isalnum(directions[count - 1][i]) == 0 && directions[count - 1][i] != '.') {
             free(pathname_simple);
+            status = ENOENT;
             return -1;
         }
     }
@@ -409,6 +398,7 @@ int rmkdir(const char *pathname) {
             free(pathname_simple);
             free(temp->name);
             free(temp);
+            status = EEXIST;
             return -1;
         }
 
@@ -431,6 +421,11 @@ int rmkdir(const char *pathname) {
         node *up_dir = find(up_dir_name);
 
         if (up_dir == NULL || up_dir->type == FNODE) {//enoent or enotdir
+            if(up_dir == NULL){
+                status = ENOENT;
+            } else{
+                status = ENOTDIR;
+            }
             for (int i = 0; i < count; ++i) free(directions[i]);
             free(up_dir_name);
             free(pathname_simple);
@@ -444,12 +439,12 @@ int rmkdir(const char *pathname) {
             free(pathname_simple);
             free(temp->name);
             free(temp);
+            status = EEXIST;
             return -1;
         }
 
         up_dir->nrde++;
         up_dir->dirents = realloc(up_dir->dirents, up_dir->nrde * sizeof(node));
-
         if (up_dir->dirents == NULL) {
             for (int i = 0; i < count; ++i) free(directions[i]);
             free(pathname_simple);
