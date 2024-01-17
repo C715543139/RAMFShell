@@ -19,9 +19,9 @@ int sls(const char *pathname) {
     node *dir = find(pathname);
     if (dir == NULL) {
         if (check_status() == 1) {
-            printf("ls: cannot access '%s': No such file or directory\\n", pathname);
+            printf("ls: cannot access '%s': No such file or directory\n", pathname);
         } else if (check_status() == 0) {
-            printf("ls: cannot access '%s': Not a directory\\n", pathname);
+            printf("ls: cannot access '%s': Not a directory\n", pathname);
         }
         return 1;
 
@@ -40,13 +40,13 @@ int scat(const char *pathname) {
     node *file = find(pathname);
     if (file == NULL) {
         if (check_status() == 2) {
-            printf("ls: cannot access '%s': No such file or directory\\n", pathname);
+            printf("ls: cannot access '%s': No such file or directory\n", pathname);
         } else if (check_status() == 0) {
-            printf("ls: cannot access '%s': Not a directory\\n", pathname);
+            printf("ls: cannot access '%s': Not a directory\n", pathname);
         }
         return 1;
     } else if (file->type == DNODE) {
-        printf("cat: %s: Is a directory\\n", pathname);
+        printf("cat: %s: Is a directory\n", pathname);
         return 1;
     }
 
@@ -62,14 +62,14 @@ int smkdir(const char *pathname) {
 
     node *dir = find(pathname);
     if (dir != NULL) {
-        printf("mkdir: cannot create directory '%s': File exists\\n", pathname);
+        printf("mkdir: cannot create directory '%s': File exists\n", pathname);
         return 1;
     } else {
         if (rmkdir(pathname) == -1) {
             if (check_status() == 0) {
-                printf("mkdir: cannot create directory '%s': Not a directory\\n", pathname);
+                printf("mkdir: cannot create directory '%s': Not a directory\n", pathname);
             } else if (check_status() == 2) {
-                printf("mkdir: cannot create directory '%s': No such file or directory\\n", pathname);
+                printf("mkdir: cannot create directory '%s': No such file or directory\n", pathname);
             }
             return 1;
         }
@@ -85,9 +85,9 @@ int stouch(const char *pathname) {
         int fd = ropen(pathname, O_CREAT | O_RDONLY);
         if (fd == -1) {
             if (check_status() == 0) {
-                printf("touch: cannot touch '%s': Not a directory\\n", pathname);
+                printf("touch: cannot touch '%s': Not a directory\n", pathname);
             } else if (check_status() == 2) {
-                printf("touch: cannot touch '%s': No such file or directory\\n", pathname);
+                printf("touch: cannot touch '%s': No such file or directory\n", pathname);
             }
             return 1;
         } else {
