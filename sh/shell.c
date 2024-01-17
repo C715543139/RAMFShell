@@ -125,6 +125,8 @@ int secho(const char *content) {
 int swhich(const char *cmd) {
     print("which %s\n", cmd);
 
+    if(PATH == NULL)return 1;
+    
     char *directions[4097];
     int count = 0, p = 0, q = 0;
     while (true) {
