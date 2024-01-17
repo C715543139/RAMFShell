@@ -164,7 +164,13 @@ int swhich(const char *cmd) {
         }
     }
     if(found != -1){
-        printf("%s%s\n",directions[found],cmd);
+        int tail = 0;
+        while (directions[found][tail] != 0)tail++;
+        if(directions[found][tail - 1] == '/'){
+            printf("%s%s\n",directions[found],cmd);
+        } else{
+            printf("%s/%s\n",directions[found],cmd);
+        }
         for (int i = 0; i < count; ++i) free(directions[i]);
         return 0;
     } else{
