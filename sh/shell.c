@@ -129,7 +129,7 @@ int swhich(const char *cmd) {
 
     if(PATH == NULL)return 1;
 
-    char *directions[4097];
+    char *directions[65536];
     int count = 0, p = 0, q = 0;
     while (true) {
         while (PATH[p] != ':' && PATH[p] != 0)p++;
