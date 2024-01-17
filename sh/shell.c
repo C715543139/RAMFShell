@@ -101,43 +101,23 @@ int stouch(const char *pathname) {
 int secho(const char *content) {
     print("echo %s\n", content);
 
-    size_t len = strlen(content), real_len = 0;
-    char *real_content = malloc((len + 1) * sizeof(char));
+    size_t len = strlen(content);
     for (int i = 0; i < len - 1; ++i) {
-        if ((content[i] == '\\' && content[i + 1] == '\\') || (content[i] == '\\' && content[i + 1] == '$'))i++;
-        real_content[real_len++] = content[i];
-    }
-
-    size_t fin_len = 0;
-    char *fin_content = malloc((real_len + 1) * sizeof(char));
-    for (int i = 0; i < real_len - 1; ++i) {
-        if (real_content[i] == '\\' && real_content[i + 1] == '\\') {
+        if(content[i] == '\\' && content[i + 1] != '\\'){
+            printf("%c",content[i + 1]);
             i++;
-            fin_content[fin_len++] = real_content[i];
-        } else if (real_content[i] == '\\' && real_content[i + 1] == '$') {
+        } else if(content[i] == '\\' && content[i + 1] == '\\'){
+            printf("\\");
             i++;
-            fin_content[fin_len++] = 0; //$
-        }
-
-    }
-
-    for (int i = 0; i < fin_len - 4; ++i) {
-        if (fin_content[i] == '$' && fin_content[i + 1] == 'P' && fin_content[i + 2] == 'A' &&
-            fin_content[i + 3] == 'T' && fin_content[i + 4] == 'H') {
-            fin_content[i] = 1; //$PATH
-        }
-    }
-
-    for (int i = 0; i < fin_len; ++i) {
-        if (fin_content[i] == 0) {
+        } else if(content[i] == '\\' && content[i + 1] == '$'){
             printf("$");
-        } else if (fin_content[i] == 1) {
-            printf("%s", PATH);
+            i++;
+        } else if(i < len - 4 && (content[i] == '$' && content[i + 1] == 'P' && content[i + 2] == 'A' && content[i + 3] == 'T' && content[i + 4] == 'H')){
+            printf("%s",PATH);
             i += 5;
-        } else {
-            printf("%c", fin_content[i]);
-        }
+        } else printf("%c",content[i]);
     }
+    if (content[len - 2] != '\\')printf("%c",content[len - 1]);
     return 0;
 }
 
