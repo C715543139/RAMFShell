@@ -164,7 +164,7 @@ int swhich(const char *cmd) {
         }
     }
     if(found != -1){
-        printf("%s",directions[found]);
+        printf("%s\n",directions[found]);
         for (int i = 0; i < count; ++i) free(directions[i]);
         return 0;
     } else{
