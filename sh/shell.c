@@ -1,50 +1,251 @@
 #include "ramfs.h"
 #include "shell.h"
-#include <string.h>
+#ifndef ONLINE_JUDGE
+#define print(...) printf("\033[31m");printf(__VA_ARGS__);printf("\033[0m");
+#else
+#define print(...)
+#endif
+
+
+#include <stdio.h>
 #include <stdlib.h>
-#include <assert.h>
+#include <string.h>
+#include <stdbool.h>
 
-const char *content = "export PATH=/usr/bin/\n";
-const char *ct = "export PATH=/home:$PATH";
-int main() {
-    init_ramfs();
+char *PATH = NULL;
+long PATH_LEN = 0;
 
-    assert(rmkdir("/home") == 0);
-    assert(rmkdir("//home") == -1);
-    assert(rmkdir("/test/1") == -1);
-    assert(rmkdir("/home/ubuntu") == 0);
-    assert(rmkdir("/usr") == 0);
-    assert(rmkdir("/usr/bin") == 0);
-    assert(rwrite(ropen("/home///ubuntu//.bashrc", O_CREAT | O_WRONLY), content, strlen(content)) == strlen(content));
+int sls(const char *pathname) {
+    print("ls %s\n", pathname);
 
-    int fd = ropen("/home/ubuntu/.bashrc", O_RDONLY);
-    char buf[105] = {0};
+    node *dir = find(pathname,false);
+    if (dir == NULL) {
+        if (check_status() == 2) {
+            printf("ls: cannot access '%s': No such file or directory\n", pathname);
+        } else if (check_status() == 0) {
+            printf("ls: cannot access '%s': Not a directory\n", pathname);
+        }
+        return 1;
 
-    assert(rread(fd, buf, 100) == strlen(content));
-    assert(!strcmp(buf, content));
-    assert(rwrite(ropen("/home////ubuntu//.bashrc", O_WRONLY | O_APPEND), ct, strlen(ct)) == strlen(ct));
-    memset(buf, 0, sizeof(buf));
-    assert(rread(fd, buf, 100) == strlen(ct));
-    assert(!strcmp(buf, ct));
-    assert(rseek(fd, 0, SEEK_SET) == 0);
-    memset(buf, 0, sizeof(buf));
-    assert(rread(fd, buf, 100) == strlen(content) + strlen(ct));
-    char ans[205] = {0};
-    strcat(ans, content);
-    strcat(ans, ct);
-    assert(!strcmp(buf, ans));
+    }
 
-    init_shell();
+    for (int i = 0; i < dir->nrde; ++i) {
+        printf("%s ", dir->dirents[i]->name);
+    }
+    printf("\n");
+    return 0;
+}
 
-    assert(scat("/home/ubuntu/.bashrc") == 0);
-    assert(stouch("/home/ls") == 0);
-    assert(stouch("/home///ls") == 0);
-    assert(swhich("ls") == 0);
-    assert(stouch("/usr/bin/ls") == 0);
-    assert(swhich("ls") == 0);
-    assert(secho("hello world\\n") == 0);
-    assert(secho("\\$PATH is $PATH") == 0);
+int scat(const char *pathname) {
+    print("cat %s\n", pathname);
 
-    close_shell();
-    close_ramfs();
+    node *file = find(pathname,false);
+    if (file == NULL) {
+        if (check_status() == 2) {
+            printf("ls: cannot access '%s': No such file or directory\n", pathname);
+        } else if (check_status() == 0) {
+            printf("ls: cannot access '%s': Not a directory\n", pathname);
+        }
+        return 1;
+    } else if (file->type == DNODE) {
+        printf("cat: %s: Is a directory\n", pathname);
+        return 1;
+    }
+
+    for (int i = 0; i < file->size; ++i) {
+        printf("%c", ((char *) (file->content))[i]);
+    }
+    printf("\n");
+    return 0;
+}
+
+int smkdir(const char *pathname) {
+    print("mkdir %s\n", pathname);
+
+    node *dir = find(pathname,false);
+    if (dir != NULL) {
+        printf("mkdir: cannot create directory '%s': File exists\n", pathname);
+        return 1;
+    } else {
+        if (rmkdir(pathname) == -1) {
+            if (check_status() == 0) {
+                printf("mkdir: cannot create directory '%s': Not a directory\n", pathname);
+            } else if (check_status() == 2) {
+                printf("mkdir: cannot create directory '%s': No such file or directory\n", pathname);
+            }
+            return 1;
+        }
+    }
+    return 0;
+}
+
+int stouch(const char *pathname) {
+    print("touch %s\n", pathname);
+
+    node *file = find(pathname,false);
+    if (file == NULL) {
+        int fd = ropen(pathname, O_CREAT | O_RDONLY);
+        if (fd == -1) {
+            if (check_status() == 0) {
+                printf("touch: cannot touch '%s': Not a directory\n", pathname);
+            } else if (check_status() == 2) {
+                printf("touch: cannot touch '%s': No such file or directory\n", pathname);
+            }
+            return 1;
+        } else {
+            rclose(fd);
+            return 0;
+        }
+    }
+    return 0;
+}
+
+int secho(const char *content) {
+    print("echo %s\n", content);
+
+    size_t len = strlen(content);
+    for (int i = 0; i < len - 1; ++i) {
+        if(content[i] == '\\' && content[i + 1] != '\\'){
+            printf("%c",content[i + 1]);
+            i++;
+        } else if(content[i] == '\\' && content[i + 1] == '\\'){
+            printf("\\");
+            i++;
+        } else if(content[i] == '\\' && content[i + 1] == '$'){
+            printf("$");
+            i++;
+        } else if(i < len - 4 && (content[i] == '$' && content[i + 1] == 'P' && content[i + 2] == 'A' && content[i + 3] == 'T' && content[i + 4] == 'H')){
+            printf("%s",PATH);
+            i += 5;
+        } else printf("%c",content[i]);
+    }
+    if (content[len - 2] != '\\' && content[len - 5] != '$')printf("%c",content[len - 1]);
+    printf("\n");
+    return 0;
+}
+
+int swhich(const char *cmd) {
+    print("which %s\n", cmd);
+
+    if(PATH == NULL)return 1;
+
+    char *directions[65536];
+    int count = 0, p = 0, q = 0;
+    while (true) {
+        while (PATH[p] != ':' && PATH[p] != 0)p++;
+        char *temp = calloc(p - q + 1, (p - q + 1) * sizeof(char));
+        strncpy(temp, &PATH[q], p - q);
+        directions[count++] = temp;
+        if (PATH[p] == 0)break;
+        p++;
+        q = p;
+    }
+
+    int found = -1;
+    for (int i = 0; i < count; ++i) {
+        if(find_file_below(find(directions[i],false),cmd)){
+            found = i;
+            break;
+        }
+    }
+    if(found != -1){
+        int tail = 0;
+        while (directions[found][tail] != 0)tail++;
+        if(directions[found][tail - 1] == '/'){
+            printf("%s%s\n",directions[found],cmd);
+        } else{
+            printf("%s/%s\n",directions[found],cmd);
+        }
+        for (int i = 0; i < count; ++i) free(directions[i]);
+        return 0;
+    } else{
+        for (int i = 0; i < count; ++i) free(directions[i]);
+        return 1;
+    }
+}
+
+
+void init_shell() {
+    //read .bashrc
+    node *bash = find("/home/ubuntu/.bashrc",true);
+
+    if (bash == NULL)return;
+
+    char *buf = malloc((bash->size + 1) * sizeof(char));
+    memcpy(buf, bash->content, bash->size);
+
+    char *temp = malloc((bash->size + 1) * sizeof(char));
+    for (int i = 0, j = 0; i < bash->size;) {
+        temp[j] = buf[i];
+        if (strcmp("export PATH=", temp) == 0) {
+            bool include$ = false;
+            for (int k = i + 1; k < bash->size && buf[k] != '\n'; ++k) {
+                if (buf[k] == '$') {
+                    include$ = true;
+                    break;
+                }
+            }
+
+            if (include$) {
+                if (buf[i + 1] == '$') { //end
+                    j = 0;
+                    i += 5;
+                    while (buf[i] != '\n' && i < bash->size) {
+                        temp[j] = buf[i];
+                        i++;
+                        j++;
+                    }
+                    PATH = realloc(PATH, PATH_LEN + j);
+                    memcpy(&PATH[PATH_LEN], temp, j);
+                    PATH_LEN += j;
+                } else { //head
+                    j = 0;
+                    i++;
+                    while (buf[i] != '$' && i < bash->size) {
+                        temp[j] = buf[i];
+                        i++;
+                        j++;
+                    }
+                    while (buf[i] != '\n' && i < bash->size)i++;
+                    PATH = realloc(PATH, PATH_LEN + j);
+                    memmove(&PATH[j], PATH, PATH_LEN);
+                    memcpy(PATH, temp, j);
+                    PATH_LEN += j;
+                }
+
+                j = 0;
+                if (buf[i] == '\n')i++;
+                memset(temp, 0, bash->size + 1);
+                continue;
+            } else { //set
+                j = 0;
+                i++;
+                while (buf[i] != '\n' && i < bash->size) {
+                    temp[j] = buf[i];
+                    i++;
+                    j++;
+                }
+                if (PATH != NULL)free(PATH);
+                PATH = malloc((j + 1) * sizeof(char));
+                memcpy(PATH, temp, j);
+                PATH_LEN = j;
+
+                j = 0;
+                if (buf[i] == '\n')i++;
+                memset(temp, 0, bash->size + 1);
+                continue;
+            }
+        }
+
+        i++;
+        j++;
+    }
+
+    free(buf);
+    free(temp);
+}
+
+void close_shell() {
+    free(PATH);
+    PATH = NULL;
 }
