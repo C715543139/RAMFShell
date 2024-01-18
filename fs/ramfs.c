@@ -300,7 +300,7 @@ int rclose(int fd) {
 }
 
 ssize_t rwrite(int fd, const void *buf, size_t count) {
-    if(fdesc[fd].used == false || fdesc[fd].f->type == DNODE){ //ebadf or eisdir
+    if(fd < 0 || fdesc[fd].used == false || fdesc[fd].f->type == DNODE){ //ebadf or eisdir
         return -1;
     }
 
@@ -333,7 +333,7 @@ ssize_t rwrite(int fd, const void *buf, size_t count) {
 }
 
 ssize_t rread(int fd, void *buf, size_t count) {
-    if(fdesc[fd].used == false || fdesc[fd].f->type == DNODE){ //ebadf or eisdir
+    if(fd < 0 ||fdesc[fd].used == false || fdesc[fd].f->type == DNODE){ //ebadf or eisdir
         return -1;
     }
 
