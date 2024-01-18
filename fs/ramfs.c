@@ -287,7 +287,7 @@ int ropen(const char *pathname, int flags) {
 }
 
 int rclose(int fd) {
-    if(fdesc[fd].used == false)return -1;
+    if(fd < 0 || fdesc[fd].used == false)return -1;
 
     fdesc[fd].offset = 0;
     fdesc[fd].used = false;
@@ -363,30 +363,31 @@ ssize_t rread(int fd, void *buf, size_t count) {
 }
 
 off_t rseek(int fd, off_t offset, int whence) {
+    if(fd < 0 || fd >= NRFD)return -1;
     switch (whence) {
         case SEEK_SET:
-            if(offset < 0 || offset >= LONG_MAX){
+            if(offset < 0){
                 return -1;
             } else{
                 fdesc[fd].offset = offset;
                 return offset;
             }
         case SEEK_CUR:
-            if(fdesc[fd].offset + offset < 0 || fdesc[fd].offset + offset >= LONG_MAX){
+            if(fdesc[fd].offset + offset < 0){
                 return -1;
             } else{
                 fdesc[fd].offset += offset;
                 return fdesc[fd].offset;
             }
         case SEEK_END:
-            if (fdesc[fd].f->size + offset < 0 || fdesc[fd].f->size + offset >= LONG_MAX){
+            if (fdesc[fd].f->size + offset < 0){
                 return -1;
             } else{
                 fdesc[fd].offset = fdesc[fd].f->size + offset;
                 return fdesc[fd].offset;
             }
         default:
-            return -1;
+            return 0;
     }
 }
 
