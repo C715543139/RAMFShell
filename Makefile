@@ -8,7 +8,7 @@ compile: git
 	@gcc -g -std=c17 -O2 -I$(INC_PATH) main.c fs/ramfs.c sh/shell.c -o ramfs-shell
 
 run: compile
-
+	@./ramfs-shell
 
 gdb: compile
 	gdb ramfs-shell
