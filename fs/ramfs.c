@@ -201,6 +201,13 @@ int ropen(const char *pathname, int flags) {
                 q = p;
             }
 
+            if(strlen(directions[count - 1]) > 32){ //basename
+                for (int i = 0; i < count; ++i) free(directions[i]);
+                free(pathname_simple);
+                status = ENOENT;
+                return -1;
+            }
+
             node *temp = malloc(sizeof(node));
             temp->type = FNODE;
             temp->dirents = NULL;
@@ -251,6 +258,10 @@ int ropen(const char *pathname, int flags) {
         }
     }
 
+    if(file->type == DNODE && rw != 0){
+        return -1;
+    }
+
     int fdesc_available;
     for (fdesc_available = 0; fdesc_available < NRFD; ++fdesc_available) {
         if(fdesc[fdesc_available].used == false)break;
@@ -289,7 +300,7 @@ int rclose(int fd) {
 }
 
 ssize_t rwrite(int fd, const void *buf, size_t count) {
-    if(fdesc[fd].used == false){ //ebadf
+    if(fdesc[fd].used == false || fdesc[fd].f->type == DNODE){ //ebadf or eisdir
         return -1;
     }
 
@@ -322,7 +333,7 @@ ssize_t rwrite(int fd, const void *buf, size_t count) {
 }
 
 ssize_t rread(int fd, void *buf, size_t count) {
-    if(fdesc[fd].used == false){ //ebadf
+    if(fdesc[fd].used == false || fdesc[fd].f->type == DNODE){ //ebadf or eisdir
         return -1;
     }
 
@@ -413,6 +424,13 @@ int rmkdir(const char *pathname) {
         if (*p == 0)break;
         p++;
         q = p;
+    }
+
+    if(strlen(directions[count - 1]) > 32){ //basename
+        for (int i = 0; i < count; ++i) free(directions[i]);
+        free(pathname_simple);
+        status = ENOENT;
+        return -1;
     }
 
     node *temp = malloc(sizeof(node));
