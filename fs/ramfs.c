@@ -398,7 +398,7 @@ int rmkdir(const char *pathname) {
     char *pathname_simple = malloc(MAX_LEN * sizeof(char)); //reduce slashes
     reduce_slashes(pathname, pathname_simple);
 
-    if (find(pathname_simple,true) == root) { //eexist
+    if (find(pathname_simple,true) != NULL) { //eexist
         free(pathname_simple);
         status = EEXIST;
         return -1;
@@ -442,15 +442,6 @@ int rmkdir(const char *pathname) {
     temp->size = 0;
 
     if (count == 1) { //below root
-        if (find_file_below(root, temp->name)) { //eexist
-            for (int i = 0; i < count; ++i) free(directions[i]);
-            free(pathname_simple);
-            free(temp->name);
-            free(temp);
-            status = EEXIST;
-            return -1;
-        }
-
         root->nrde++;
         root->dirents = realloc(root->dirents, root->nrde * sizeof(node));
         root->dirents[root->nrde - 1] = temp;
@@ -473,16 +464,6 @@ int rmkdir(const char *pathname) {
             free(pathname_simple);
             free(temp->name);
             free(temp);
-            return -1;
-        }
-
-        if (find_file_below(up_dir, temp->name)) { //eexist
-            for (int i = 0; i < count; ++i) free(directions[i]);
-            free(up_dir_name);
-            free(pathname_simple);
-            free(temp->name);
-            free(temp);
-            status = EEXIST;
             return -1;
         }
 
