@@ -18,7 +18,7 @@ long PATH_LEN = 0;
 int sls(const char *pathname) {
     print("ls %s\n", pathname);
 
-    node *dir = find(pathname);
+    node *dir = find(pathname,false);
     if (dir == NULL) {
         if (check_status() == 2) {
             printf("ls: cannot access '%s': No such file or directory\n", pathname);
@@ -39,7 +39,7 @@ int sls(const char *pathname) {
 int scat(const char *pathname) {
     print("cat %s\n", pathname);
 
-    node *file = find(pathname);
+    node *file = find(pathname,false);
     if (file == NULL) {
         if (check_status() == 2) {
             printf("ls: cannot access '%s': No such file or directory\n", pathname);
@@ -62,7 +62,7 @@ int scat(const char *pathname) {
 int smkdir(const char *pathname) {
     print("mkdir %s\n", pathname);
 
-    node *dir = find(pathname);
+    node *dir = find(pathname,false);
     if (dir != NULL) {
         printf("mkdir: cannot create directory '%s': File exists\n", pathname);
         return 1;
@@ -82,7 +82,7 @@ int smkdir(const char *pathname) {
 int stouch(const char *pathname) {
     print("touch %s\n", pathname);
 
-    node *file = find(pathname);
+    node *file = find(pathname,false);
     if (file == NULL) {
         int fd = ropen(pathname, O_CREAT | O_RDONLY);
         if (fd == -1) {
@@ -143,7 +143,7 @@ int swhich(const char *cmd) {
 
     int found = -1;
     for (int i = 0; i < count; ++i) {
-        if(find_file_below(find(directions[i]),cmd)){
+        if(find_file_below(find(directions[i],false),cmd)){
             found = i;
             break;
         }
@@ -167,7 +167,7 @@ int swhich(const char *cmd) {
 
 void init_shell() {
     //read .bashrc
-    node *bash = find("/home/ubuntu/.bashrc");
+    node *bash = find("/home/ubuntu/.bashrc",true);
 
     if (bash == NULL)return;
 
