@@ -228,9 +228,7 @@ int ropen(const char *pathname, int flags) {
                 node *up_dir = find(up_dir_name,true);
 
                 if (up_dir == NULL || up_dir->type == FNODE) {//enoent or enotdir
-                    if(up_dir == NULL){
-                        status = ENOENT;
-                    } else{
+                    if(up_dir != NULL && up_dir->type == FNODE){
                         status = ENOTDIR;
                     }
                     for (int i = 0; i < count; ++i) free(directions[i]);
@@ -454,11 +452,7 @@ int rmkdir(const char *pathname) {
         node *up_dir = find(up_dir_name,true);
 
         if (up_dir == NULL || up_dir->type == FNODE) {//enoent or enotdir
-            if(up_dir == NULL){
-                status = ENOENT;
-            } else{
-                status = ENOTDIR;
-            }
+            if(up_dir != NULL && up_dir->type == FNODE)status = ENOTDIR;
             for (int i = 0; i < count; ++i) free(directions[i]);
             free(up_dir_name);
             free(pathname_simple);
