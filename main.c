@@ -43,7 +43,7 @@ int main() {
     assert(rclose(fds) == -1);
     fds = ropen("/usr/bin/1/1/1/3/qdwads", O_CREAT | O_WRONLY);
     assert(rclose(fds) == 0);
-    fds = ropen("/usr/bin/1/1/1/3/qdwadsd/sojfasf", O_RDONLY);
+    fds = ropen("/usr/bin/1/1/1/3/qdwadsd/sojfasf", O_CREAT | O_RDONLY);
     assert(rclose(fds) == 0);
     fds = ropen("/usr/bin/1/1/1/1", O_RDONLY);
     assert(rclose(fds) == 0);
