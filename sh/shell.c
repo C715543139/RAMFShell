@@ -191,6 +191,7 @@ void init_shell() {
             p += 5;
             strncat(temp,p,q - p);
         } else if(*(q - 5) == '$'){
+            q -= 5;
             memmove(&temp[q - p],temp, strlen(temp) + 1);
             memcpy(temp,p,q - p);
         } else{
