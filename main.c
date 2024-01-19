@@ -14,6 +14,7 @@ int main() {
     assert(rmkdir("/test/1") == -1);
     assert(rmkdir("/home/ubuntu") == 0);
     assert(rmkdir("/usr") == 0);
+    assert(rmkdir("/usr/bin") == 0);
     assert(rmkdir("/usr/bin/1") == 0);
     assert(rmkdir("/usr/bin/1/1") == 0);
     assert(rmkdir("/usr/bin/1/1/1") == 0);
