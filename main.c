@@ -41,7 +41,7 @@ int main() {
 
     int fds = ropen("/home///ubuntu/", O_CREAT | O_WRONLY);
     assert(rclose(fds) == -1);
-    fds = ropen("/usr/bin/1/1/1/3/qdwadsd", O_CREAT | O_WRONLY);
+    fds = ropen("/usr/bin/1/1/1/3/qdwads", O_CREAT | O_WRONLY);
     assert(rclose(fds) == 0);
     fds = ropen("/usr/bin/1/1/1/3/qdwadsd/sojfasf", O_RDONLY);
     assert(rclose(fds) == 0);
