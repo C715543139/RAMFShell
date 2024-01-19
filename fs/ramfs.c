@@ -170,11 +170,10 @@ int ropen(const char *pathname, int flags) {
                 root->dirents[root->nrde - 1] = temp;
                 temp->upper = root;
             } else {
-                char *up_dir_name = malloc(1 + strlen(pathname_simple));
-                strcpy(up_dir_name, pathname_simple);
-                up_dir_name[strlen(pathname_simple) - strlen(directions[count - 1]) - 1] = 0;
-                node *up_dir = find(up_dir_name, true);
+                char *up_dir_name = strdup(pathname_simple);
+                memset(&up_dir_name[strlen(pathname_simple) - strlen(directions[count - 1]) - 1],0,strlen(directions[count - 1]) + 1);
 
+                node *up_dir = find(up_dir_name, true);
                 if (up_dir == NULL || up_dir->type == FNODE) {//enoent or enotdir
                     if (up_dir != NULL && up_dir->type == FNODE) {
                         status = ENOTDIR;
