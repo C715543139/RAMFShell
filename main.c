@@ -22,11 +22,11 @@ int main() {
     assert(rmkdir("/usr/bin/1/1/1/2") == 0);
     assert(rmkdir("/usr/bin/1/1/1/3") == 0);
     assert(rmkdir("/usr/bin/1/1/1/4") == 0);
-    assert(rmkdir("/usr/bin/1/1/1/5") == 0);
+    assert(rmkdir("/usr/bin////1/1/1/5/") == 0);
     assert(rmkdir("/usr/bin/1/1/1/6") == 0);
     assert(rmkdir("/usr/bin/1/1/1/7") == 0);
-    assert(rmkdir("/usr/bin/1/1/1/7") == -1);
-    assert(rmkdir("/usr/bin/1/1/1/3/qdwadsd") == 0);
+    assert(rmkdir("/usr/bin/1/1/1////7") == -1);
+    assert(rmkdir("/usr/bin/1/1/1/3/qdwadsd/") == 0);
     assert(rmkdir("/usr/bin/1/1/1/1") == -1);
     assert(rmkdir("/usr/bin/1/1/11/1") == -1);
     assert(rmkdir("/usr/bin/1/1/21/1") == -1);
