@@ -8,7 +8,7 @@
 
 node *root = NULL;
 
-#define MAX_LEN 65536
+#define MAX_LEN 65540
 #define NRFD 4096
 FD fdesc[NRFD];
 
