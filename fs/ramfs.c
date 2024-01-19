@@ -78,7 +78,7 @@ node *find(const char *pathname, bool simple) {
         } else{
             temp = malloc((q - p + 1) * sizeof(char));
             strncpy(temp,p,q - p);
-            temp[q - p + 1] = 0;
+            temp[q - p] = 0;
         }
         directions[count++] = temp;
 
