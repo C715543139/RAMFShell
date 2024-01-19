@@ -5,7 +5,7 @@
 #include <assert.h>
 
 const char *content = "export PATH=/usr/bin/\n";
-const char *ct = "export PATH=/home:$PATH";
+const char *ct = "export PATH=$PATH:/home";
 int main() {
     init_ramfs();
 
