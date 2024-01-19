@@ -26,6 +26,35 @@ char *strdup(const char *content) {
     return new;
 }
 
+void split_path(char **directions,const char *pathname_simple,int *count,bool *is_slash_end){
+    *count = 0;
+    *is_slash_end = false;
+    char *p, *q;
+
+    p = strchr(pathname_simple,'/');
+    while (p != NULL){
+        p++;
+        q = strchr(p,'/');
+
+        char *temp;
+        if(q == NULL){
+            temp = strdup(p);
+        } else if(*q == '/' && *(q + 1) == 0){
+            *q = 0;
+            temp = strdup(p);
+            *is_slash_end = true;
+            q = NULL;
+        } else {
+            temp = calloc(q - p + 1,(q - p + 1) * sizeof(char));
+            strncpy(temp,p,q - p);
+        }
+        *count += 1;
+        directions[*count] = temp;
+
+        p = q;
+    }
+}
+
 void reduce_slashes(const char *input, char *output) {
     int i, j = 0;
     for (i = 0; input[i] != 0; ++i) {
@@ -64,26 +93,10 @@ node *find(const char *pathname, bool simple) {
     }
 
     node *now = root;
-    const char *p, *q;
     char *directions[MAX_LEN];
     int count = 0;
-    p = strchr(pathname_simple,'/');
-    while (p != NULL){
-        p++;
-        q = strchr(p,'/');
-
-        char *temp;
-        if(q == NULL){
-            temp = strdup(p);
-        } else{
-            temp = malloc((q - p + 1) * sizeof(char));
-            strncpy(temp,p,q - p);
-            temp[q - p] = 0;
-        }
-        directions[count++] = temp;
-
-        p = q;
-    }
+    bool is_slash_end = false;
+    split_path(directions,pathname_simple,&count,&is_slash_end);
 
     for (int i = 0; i < count; ++i) {
         if (now == NULL || now->type == FNODE) {
@@ -123,30 +136,20 @@ int ropen(const char *pathname, int flags) {
             char *pathname_simple = malloc((strlen(pathname) + 1) * sizeof(char)); //reduce slashes
             reduce_slashes(pathname, pathname_simple);
 
-            const char *p, *q;
-            char *directions[MAX_LEN];
-            int count = 0;
-            p = q = &pathname_simple[1];
-            while (true) {
-                while (*p != '/' && *p != 0) {
-                    if (isalnum(*p) == 0 && *p != '.') { //einval
-                        for (int i = 0; i < count; ++i) free(directions[i]);
-                        free(pathname_simple);
-                        status = ENOENT;
-                        return -1;
-                    }
-                    p++;
+            for (int i = 0;pathname_simple[i] != 0; ++i) { //einval
+                if (isalnum(pathname_simple[i]) == 0 && pathname_simple[i] != '.') {
+                    free(pathname_simple);
+                    status = ENOENT;
+                    return -1;
                 }
-                char *temp_dir = calloc(p - q + 1, (p - q + 1) * sizeof(char));
-                strncpy(temp_dir, q, p - q);
-                temp_dir[p - q] = 0;
-                directions[count++] = temp_dir;
-                if (*p == 0)break;
-                p++;
-                q = p;
             }
 
-            if (strlen(directions[count - 1]) > 32) { //basename
+            char *directions[MAX_LEN];
+            int count = 0;
+            bool is_slash_end = false;
+            split_path(directions,pathname_simple,&count,&is_slash_end);
+
+            if (is_slash_end || strlen(directions[count - 1]) > 32) { //basename
                 for (int i = 0; i < count; ++i) free(directions[i]);
                 free(pathname_simple);
                 status = ENOENT;
@@ -202,6 +205,8 @@ int ropen(const char *pathname, int flags) {
     }
 
     if (file->type == DNODE && rw != 0) {
+        return -1;
+    } else if(file->type == FNODE && pathname[strlen(pathname) - 1] == '/'){
         return -1;
     }
 
