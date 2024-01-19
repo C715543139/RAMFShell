@@ -29,7 +29,9 @@ int sls(const char *pathname) {
     }
 
     for (int i = 0; i < dir->nrde; ++i) {
-        printf("%s%c", dir->dirents[i]->name," \n"[i == dir->nrde - 1]);
+        if (dir->dirents[i]->name[0] != '.') {
+            printf("%s%c", dir->dirents[i]->name, " \n"[i == dir->nrde - 1]);
+        }
     }
 
     return 0;
