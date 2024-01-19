@@ -76,7 +76,7 @@ node *find(const char *pathname, bool simple) {
         if(q == NULL){
             temp = strdup(p);
         } else{
-            temp = malloc((p - q + 1) * sizeof(char));
+            temp = malloc((q - p + 1) * sizeof(char));
             strncpy(temp,p,q - p);
             temp[q - p + 1] = 0;
         }
