@@ -365,7 +365,7 @@ int rmkdir(const char *pathname) {
     bool is_slash_end = false;
     split_path(directions,pathname_simple,&count,&is_slash_end);
 
-    if (is_slash_end || strlen(directions[count - 1]) > 32) { //basename
+    if (strlen(directions[count - 1]) > 32) { //basename
         for (int i = 0; i < count; ++i) free(directions[i]);
         free(pathname_simple);
         status = ENOENT;
