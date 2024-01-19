@@ -137,7 +137,7 @@ int ropen(const char *pathname, int flags) {
             reduce_slashes(pathname, pathname_simple);
 
             for (int i = 0;pathname_simple[i] != 0; ++i) { //einval
-                if (isalnum(pathname_simple[i]) == 0 && pathname_simple[i] != '.') {
+                if (isalnum(pathname_simple[i]) == 0 && pathname_simple[i] != '.' && pathname_simple[i] != '/') {
                     free(pathname_simple);
                     status = ENOENT;
                     return -1;
