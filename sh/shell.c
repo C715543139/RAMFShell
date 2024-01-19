@@ -174,75 +174,34 @@ void init_shell() {
     char *buf = malloc((bash->size + 1) * sizeof(char));
     reduce_slashes(bash->content,buf);
 
-    char *temp = malloc((bash->size + 1) * sizeof(char));
-    for (int i = 0, j = 0; i < bash->size;) {
-        temp[j] = buf[i];
-        if (strcmp("export PATH=", temp) == 0) {
-            bool include$ = false;
-            for (int k = i + 1; k < bash->size && buf[k] != '\n'; ++k) {
-                if (buf[k] == '$') {
-                    include$ = true;
-                    break;
-                }
-            }
+    char *temp = calloc(bash->size + 1,(bash->size + 1) * sizeof(char));
+    char *p = strstr(buf,"export PATH=");
+    while (p != NULL){
+        p += 12;
+        char *q = strstr(p,"export PATH=");
 
-            if (include$) {
-                if (buf[i + 1] == '$') { //end
-                    j = 0;
-                    i += 5;
-                    while (buf[i] != '\n' && i < bash->size) {
-                        temp[j] = buf[i];
-                        i++;
-                        j++;
-                    }
-                    PATH = realloc(PATH, PATH_LEN + j);
-                    memcpy(&PATH[PATH_LEN], temp, j);
-                    PATH_LEN += j;
-                } else { //head
-                    j = 0;
-                    i++;
-                    while (buf[i] != '$' && i < bash->size) {
-                        temp[j] = buf[i];
-                        i++;
-                        j++;
-                    }
-                    while (buf[i] != '\n' && i < bash->size)i++;
-                    PATH = realloc(PATH, PATH_LEN + j);
-                    memmove(&PATH[j], PATH, PATH_LEN);
-                    memcpy(PATH, temp, j);
-                    PATH_LEN += j;
-                }
-
-                j = 0;
-                if (buf[i] == '\n')i++;
-                memset(temp, 0, bash->size + 1);
-                continue;
-            } else { //set
-                j = 0;
-                i++;
-                while (buf[i] != '\n' && i < bash->size) {
-                    temp[j] = buf[i];
-                    i++;
-                    j++;
-                }
-                if (PATH != NULL)free(PATH);
-                PATH = malloc((j + 1) * sizeof(char));
-                memcpy(PATH, temp, j);
-                PATH_LEN = j;
-
-                j = 0;
-                if (buf[i] == '\n')i++;
-                memset(temp, 0, bash->size + 1);
-                continue;
-            }
+        if(q == NULL){
+            q = p;
+            while (*q != 0 && *q != '\n')q++;
+        } else{
+            while (*(q - 1) == '\n')q--;
         }
 
-        i++;
-        j++;
+        if(*p == '$'){
+            p += 5;
+            strncat(temp,p,q - p);
+        } else if(*(q - 5) == '$'){
+            memmove(&temp[q - p],temp, strlen(temp) + 1);
+            memcpy(temp,p,q - p);
+        } else{
+            memset(temp,0,(bash->size + 1) * sizeof(char));
+            memcpy(temp,p,q - p);
+        }
+        p = strstr(p,"export PATH=");
     }
+    PATH = temp;
 
     free(buf);
-    free(temp);
 }
 
 void close_shell() {
