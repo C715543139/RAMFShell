@@ -207,6 +207,7 @@ int ropen(const char *pathname, int flags) {
     if (file->type == DNODE && rw != 0) {
         return -1;
     } else if(file->type == FNODE && pathname[strlen(pathname) - 1] == '/'){
+        status = ENOENT;
         return -1;
     }
 
