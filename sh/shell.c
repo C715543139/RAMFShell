@@ -135,6 +135,7 @@ int swhich(const char *cmd) {
         while (PATH[p] != ':' && PATH[p] != 0)p++;
         char *temp = calloc(p - q + 1, (p - q + 1) * sizeof(char));
         strncpy(temp, &PATH[q], p - q);
+        temp[p - q] = 0;
         directions[count++] = temp;
         if (PATH[p] == 0)break;
         p++;

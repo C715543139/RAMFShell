@@ -114,9 +114,7 @@ int ropen(const char *pathname, int flags) {
     if (flags & O_TRUNC) trunc = true;
     if ((flags & O_RDONLY) == O_RDONLY) rw = 0;
     if ((flags & O_WRONLY) == O_WRONLY) rw = 1;
-    if ((flags & O_RDWR) == O_RDWR) {
-        if (rw == 0) rw = 2;
-    }
+    if ((flags & O_RDWR) == O_RDWR && rw == 0) rw = 2;
 
     node *file = find(pathname, false);
 
@@ -141,6 +139,7 @@ int ropen(const char *pathname, int flags) {
                 }
                 char *temp_dir = calloc(p - q + 1, (p - q + 1) * sizeof(char));
                 strncpy(temp_dir, q, p - q);
+                temp_dir[p - q] = 0;
                 directions[count++] = temp_dir;
                 if (*p == 0)break;
                 p++;
@@ -365,6 +364,7 @@ int rmkdir(const char *pathname) {
         }
         char *temp_dir = calloc(p - q + 1, (p - q + 1) * sizeof(char));
         strncpy(temp_dir, q, p - q);
+        temp_dir[p - q] = 0;
         directions[count++] = temp_dir;
         if (*p == 0)break;
         p++;
