@@ -112,7 +112,6 @@ node *find(const char *pathname, bool simple) {
         now = find_file_below(now,directions[i]);
     }
 
-    for (int i = 0; i < count; ++i) free(directions[i]);
     free(pathname_simple);
     return now;
 }
