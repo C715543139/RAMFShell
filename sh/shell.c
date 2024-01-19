@@ -172,7 +172,7 @@ void init_shell() {
     if (bash == NULL)return;
 
     char *buf = malloc((bash->size + 1) * sizeof(char));
-    memcpy(buf, bash->content, bash->size);
+    reduce_slashes(bash->content,buf);
 
     char *temp = malloc((bash->size + 1) * sizeof(char));
     for (int i = 0, j = 0; i < bash->size;) {

@@ -3,35 +3,48 @@
 #include <string.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <stdio.h>
 
-#define test(func, expect, ...) assert(func(__VA_ARGS__) == expect)
-#define succopen(var, ...) assert((var = ropen(__VA_ARGS__)) >= 0)
-#define failopen(var, ...) assert((var = ropen(__VA_ARGS__)) == -1)
-
+const char *content = "export PATH=/usr/bin/\n";
+const char *ct = "export PATH=/home:$PATH";
 int main() {
     init_ramfs();
-    int fd;
-    test(rmkdir, -1, "/000000000000000000000000000000001");
 
-    test(rmkdir, 0, "/it");
-    test(rmkdir, 0, "/it/has");
-    test(rmkdir, 0, "/it/has/been");
-    test(rmkdir, 0, "/it/has/been/a");
-    test(rmkdir, 0, "/it/has/been/a/long");
+    assert(rmkdir("/home") == 0);
+    assert(rmkdir("//home") == -1);
+    assert(rmkdir("/test/1") == -1);
+    assert(rmkdir("/home/ubuntu") == 0);
+    assert(rmkdir("/usr") == 0);
+    assert(rmkdir("/usr/bin") == 0);
+    assert(rwrite(ropen("/home///ubuntu//.bashrc", O_CREAT | O_WRONLY), content, strlen(content)) == strlen(content));
 
-    succopen(fd, "/it/has/been/a/long", O_CREAT);
-    failopen(fd, "it/has/been/a/long", O_CREAT);
-    char buf[105];
-    test(rread, -1, fd, buf, 100);
-    test(rwrite, -1, fd, "a", 1);
-    test(rrmdir, -1, "/it/has/been");
-    test(rrmdir, 0, "/it/has/been/a/long");
-    test(rwrite, -1, fd, "a", 1);
-    test(rread, -1, fd, buf, 100);
+    int fd = ropen("/home/ubuntu/.bashrc", O_RDONLY);
+    char buf[105] = {0};
+
+    assert(rread(fd, buf, 100) == strlen(content));
+    assert(!strcmp(buf, content));
+    assert(rwrite(ropen("/home////ubuntu//.bashrc", O_WRONLY | O_APPEND), ct, strlen(ct)) == strlen(ct));
+    memset(buf, 0, sizeof(buf));
+    assert(rread(fd, buf, 100) == strlen(ct));
+    assert(!strcmp(buf, ct));
+    assert(rseek(fd, 0, SEEK_SET) == 0);
+    memset(buf, 0, sizeof(buf));
+    assert(rread(fd, buf, 100) == strlen(content) + strlen(ct));
+    char ans[205] = {0};
+    strcat(ans, content);
+    strcat(ans, ct);
+    assert(!strcmp(buf, ans));
 
     init_shell();
+
+    assert(scat("/home/ubuntu/.bashrc") == 0);
+    assert(stouch("/home/ls") == 0);
+    assert(stouch("/home///ls") == 0);
+    assert(swhich("ls") == 0);
+    assert(stouch("/usr/bin/ls") == 0);
+    assert(swhich("ls") == 0);
+    assert(secho("hello world\\n") == 0);
+    assert(secho("\\$PATH is $PATH") == 0);
+
     close_shell();
     close_ramfs();
-    return 0;
 }
