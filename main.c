@@ -75,7 +75,7 @@ int main() {
     assert(swhich("ls") == 0);
     assert(secho("hello world\\n") == 0);
     assert(secho("\\$PATH is $PATH") == 0);
-    assert(sls("/usr/bin/1/1/1/") == 0);
+    assert(sls("/usr/bin/1/1/1/3/qdwadsd/sojfasf") == 0);
 
     close_shell();
     close_ramfs();
