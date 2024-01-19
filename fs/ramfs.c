@@ -48,8 +48,8 @@ void split_path(char **directions,const char *pathname_simple,int *count,bool *i
             temp = calloc(q - p + 1,(q - p + 1) * sizeof(char));
             strncpy(temp,p,q - p);
         }
-        *count += 1;
         directions[*count] = temp;
+        *count += 1;
 
         p = q;
     }
