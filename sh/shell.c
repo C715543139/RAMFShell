@@ -28,12 +28,17 @@ int sls(const char *pathname) {
         return 1;
     }
 
-    for (int i = 0; i < dir->nrde; ++i) {
-        if (dir->dirents[i]->name[0] != '.') {
-            printf("%s%c", dir->dirents[i]->name, " \n"[i == dir->nrde - 1]);
+    if(dir->type == FNODE){
+        if (dir->name[0] != '.') {
+            printf("%s\n", dir->name);
+        }
+    } else {
+        for (int i = 0; i < dir->nrde; ++i) {
+            if (dir->dirents[i]->name[0] != '.') {
+                printf("%s%c", dir->dirents[i]->name, " \n"[i == dir->nrde - 1]);
+            }
         }
     }
-
     return 0;
 }
 
