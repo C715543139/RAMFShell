@@ -347,6 +347,12 @@ int rmkdir(const char *pathname) {
     char *pathname_simple = malloc(MAX_LEN * sizeof(char)); //reduce slashes
     reduce_slashes(pathname, pathname_simple);
 
+    if (find(pathname_simple, true) != NULL) { //eexist
+        free(pathname_simple);
+        status = EEXIST;
+        return -1;
+    }
+
     for (int i = 0;pathname_simple[i] != 0; ++i) { //einval
         if (isalnum(pathname_simple[i]) == 0 && pathname_simple[i] != '.' && pathname_simple[i] != '/') {
             free(pathname_simple);
