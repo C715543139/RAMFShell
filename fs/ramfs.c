@@ -255,11 +255,9 @@ ssize_t rwrite(int fd, const void *buf, size_t count) {
     int rw = 0; //rdonly 0,wronly 1,rdwr 2
     if ((fdesc[fd].flags & O_RDONLY) == O_RDONLY) rw = 0;
     if ((fdesc[fd].flags & O_WRONLY) == O_WRONLY) rw = 1;
-    if ((fdesc[fd].flags & O_RDWR) == O_RDWR) {
-        if (rw == 0) rw = 2;
-    }
+    if ((fdesc[fd].flags & O_RDWR) == O_RDWR && rw == 0) rw = 2;
 
-    if (fdesc[fd].f->type == DNODE || rw == 0) { //eisdir or ebadf
+    if (rw == 0) {//ebadf
         return -1;
     }
 
@@ -288,11 +286,9 @@ ssize_t rread(int fd, void *buf, size_t count) {
     int rw = 0; //rdonly 0,wronly 1,rdwr 2
     if ((fdesc[fd].flags & O_RDONLY) == O_RDONLY) rw = 0;
     if ((fdesc[fd].flags & O_WRONLY) == O_WRONLY) rw = 1;
-    if ((fdesc[fd].flags & O_RDWR) == O_RDWR) {
-        if (rw == 0) rw = 2;
-    }
+    if ((fdesc[fd].flags & O_RDWR) == O_RDWR && rw == 0) rw = 2;
 
-    if (fdesc[fd].f->type == DNODE || rw == 1) { //eisdir or ebadf
+    if (rw == 1) {//ebadf
         return -1;
     }
 
@@ -388,11 +384,10 @@ int rmkdir(const char *pathname) {
         temp->upper = root;
 
     } else {
-        char *up_dir_name = malloc(1 + strlen(pathname_simple));
-        strcpy(up_dir_name, pathname_simple);
-        up_dir_name[strlen(pathname_simple) - strlen(directions[count - 1]) - 1] = 0;
-        node *up_dir = find(up_dir_name, true);
+        char *up_dir_name = strdup(pathname_simple);
+        memset(&up_dir_name[strlen(pathname_simple) - strlen(directions[count - 1]) - 1],0,strlen(directions[count - 1]) + 1);
 
+        node *up_dir = find(up_dir_name, true);
         if (up_dir == NULL || up_dir->type == FNODE) {//enoent or enotdir
             if (up_dir != NULL && up_dir->type == FNODE)status = ENOTDIR;
             for (int i = 0; i < count; ++i) free(directions[i]);
