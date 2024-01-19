@@ -347,36 +347,20 @@ int rmkdir(const char *pathname) {
     char *pathname_simple = malloc(MAX_LEN * sizeof(char)); //reduce slashes
     reduce_slashes(pathname, pathname_simple);
 
-    if (find(pathname_simple, true) != NULL) { //eexist
-        free(pathname_simple);
-        status = EEXIST;
-        return -1;
-    }
-
-    const char *p, *q;
-    char *directions[2048];
-    int count = 0;
-    p = q = &pathname_simple[1];
-    while (true) {
-        while (*p != '/' && *p != 0) {
-            if (isalnum(*p) == 0 && *p != '.') {
-                for (int i = 0; i < count; ++i) free(directions[i]);
-                free(pathname_simple);
-                status = ENOENT;
-                return -1;
-            }
-            p++;
+    for (int i = 0;pathname_simple[i] != 0; ++i) { //einval
+        if (isalnum(pathname_simple[i]) == 0 && pathname_simple[i] != '.' && pathname_simple[i] != '/') {
+            free(pathname_simple);
+            status = ENOENT;
+            return -1;
         }
-        char *temp_dir = calloc(p - q + 1, (p - q + 1) * sizeof(char));
-        strncpy(temp_dir, q, p - q);
-        temp_dir[p - q] = 0;
-        directions[count++] = temp_dir;
-        if (*p == 0)break;
-        p++;
-        q = p;
     }
 
-    if (strlen(directions[count - 1]) > 32) { //basename
+    char *directions[MAX_LEN];
+    int count = 0;
+    bool is_slash_end = false;
+    split_path(directions,pathname_simple,&count,&is_slash_end);
+
+    if (is_slash_end || strlen(directions[count - 1]) > 32) { //basename
         for (int i = 0; i < count; ++i) free(directions[i]);
         free(pathname_simple);
         status = ENOENT;
