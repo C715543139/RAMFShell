@@ -26,7 +26,6 @@ int sls(const char *pathname) {
             printf("ls: cannot access '%s': Not a directory\n", pathname);
         }
         return 1;
-
     }
 
     for (int i = 0; i < dir->nrde; ++i) {
