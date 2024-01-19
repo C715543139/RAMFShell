@@ -35,7 +35,7 @@ typedef struct FD {
 } FD;
 
 int check_status();
-bool find_file_below(node *now, const char *name);
+node *find_file_below(node *now, const char *name);
 void reduce_slashes(const char *input, char *output);
 int ropen(const char *pathname, int flags);
 int rclose(int fd);

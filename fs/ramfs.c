@@ -36,16 +36,16 @@ void reduce_slashes(const char *input, char *output) {
     output[j] = 0;
 }
 
-bool find_file_below(node *now, const char *name) {
-    if (now->type == DNODE) {
+node *find_file_below(node *now, const char *name) {
+    if (now != NULL && now->type == DNODE) {
         for (int i = 0; i < now->nrde; ++i) {
             if (strcmp(now->dirents[i]->name, name) == 0) {
-                return true;
+                return now->dirents[i];
             }
         }
     }
 
-    return false;
+    return NULL;
 }
 
 node *find(const char *pathname, bool simple) {
@@ -59,6 +59,7 @@ node *find(const char *pathname, bool simple) {
     }
 
     if (strcmp("/", pathname_simple) == 0) {
+        free(pathname_simple);
         return root;
     }
 
@@ -66,44 +67,36 @@ node *find(const char *pathname, bool simple) {
     const char *p, *q;
     char *directions[MAX_LEN];
     int count = 0;
-    p = q = &pathname_simple[1];
-    while (true) {
-        while (*p != '/' && *p != 0)p++;
-        char *temp_dir = calloc(p - q + 1, (p - q + 1) * sizeof(char));
-        strncpy(temp_dir, q, p - q);
-        directions[count++] = temp_dir;
-        if ((*p == 0) || (*p == '/' && *(p + 1) == 0))break;
+    p = strchr(pathname_simple,'/');
+    while (p != NULL){
         p++;
-        q = p;
+        q = strchr(p,'/');
+
+        char *temp;
+        if(q == NULL){
+            temp = strdup(p);
+        } else{
+            temp = malloc((p - q + 1) * sizeof(char));
+            strncpy(temp,p,q - p);
+            temp[q - p + 1] = 0;
+        }
+        directions[count++] = temp;
+
+        p = q;
     }
 
     for (int i = 0; i < count; ++i) {
-        if (now->type == FNODE) {
-            for (int j = 0; j < count; ++j) free(directions[j]);
-            free(pathname_simple);
-            status = ENOTDIR;
-            return NULL;
-        } else if (now->nrde == 0) {
-            for (int j = 0; j < count; ++j) free(directions[j]);
-            free(pathname_simple);
+        if (now == NULL || now->type == FNODE) {
+            now = NULL;
             status = ENOENT;
-            return NULL;
+            break;
+        } else if (now->nrde == 0) {
+            now = NULL;
+            status = ENOTDIR;
+            break;
         }
 
-        bool found = false;
-        for (int j = 0; j < now->nrde; ++j) {
-            if (strcmp(directions[i], now->dirents[j]->name) == 0) {
-                now = now->dirents[j];
-                found = true;
-                break;
-            }
-        }
-        if (found == false) {
-            for (int j = 0; j < count; ++j) free(directions[j]);
-            free(pathname_simple);
-            status = ENOENT;
-            return NULL;
-        }
+        now = find_file_below(now,directions[i]);
     }
 
     for (int i = 0; i < count; ++i) free(directions[i]);

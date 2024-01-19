@@ -143,7 +143,7 @@ int swhich(const char *cmd) {
 
     int found = -1;
     for (int i = 0; i < count; ++i) {
-        if(find_file_below(find(directions[i],false),cmd)){
+        if(find_file_below(find(directions[i],false),cmd) != NULL){
             found = i;
             break;
         }
@@ -198,6 +198,7 @@ void init_shell() {
             memset(temp,0,(bash->size + 1) * sizeof(char));
             memcpy(temp,p,q - p);
         }
+
         p = strstr(p,"export PATH=");
     }
     PATH = temp;
