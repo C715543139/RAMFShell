@@ -110,26 +110,39 @@ int stouch(const char *pathname) {
 int secho(const char *content) {
     print("echo %s\n", content);
 
-    size_t len = strlen(content);
-    for (int i = 0; i < len - 1; ++i) {
-        if (content[i] == '\\' && content[i + 1] == '$') {
-            printf("$");
-            i++;
-        } else if (content[i] == '\\' && content[i + 1] == '\\') {
-            printf("\\");
-            i++;
-        } else if (content[i] == '\\' && content[i + 1] != '\\') {
-            printf("%c", content[i + 1]);
-            i++;
-        } else if (i < len - 4 &&
-                   (content[i] == '$' && content[i + 1] == 'P' && content[i + 2] == 'A' && content[i + 3] == 'T' &&
-                    content[i + 4] == 'H')) {
-            printf("%s", PATH);
+    size_t len = strlen(content) + 10;
+    char *input = calloc(len, len * sizeof(char));
+    char *output = NULL;
+    size_t output_len = 0;
+    strcpy(input, content);
+    for (int i = 0; i < len - 5;) {
+        if (input[i] == '\\' && input[i + 1] == '$') {
+            output_len++;
+            output = realloc(output,(output_len + 1) * sizeof(char));
+            output[output_len - 1] = '$';
+            output[output_len] = 0;
+            i += 2;
+        } else if (input[i] == '\\' && input[i + 1] == '\\') {
+            output_len++;
+            output = realloc(output,(output_len + 1) * sizeof(char));
+            output[output_len - 1] = '\\';
+            output[output_len] = 0;
+            i += 2;
+        } else if (input[i] == '$' && input[i + 1] == 'P' && input[i + 2] == 'A' && input[i + 3] == 'T' &&
+                    input[i + 4] == 'H') {
+            output_len += strlen(PATH);
+            output = realloc(output,(output_len + 1) * sizeof(char));
+            strcat(output,PATH);
             i += 5;
-        } else printf("%c", content[i]);
+        } else {
+            output_len++;
+            output = realloc(output,(output_len + 1) * sizeof(char));
+            output[output_len - 1] = input[i];
+            output[output_len] = 0;
+            i++;
+        }
     }
-    if (content[len - 2] != '\\' && content[len - 5] != '$')printf("%c", content[len - 1]);
-    printf("\n");
+    printf("%s\n",output);
     return 0;
 }
 
