@@ -95,6 +95,8 @@ int stouch(const char *pathname) {
                 printf("touch: cannot touch '%s': Not a directory\n", pathname);
             } else if (check_status() == 2) {
                 printf("touch: cannot touch '%s': No such file or directory\n", pathname);
+            } else if(check_status() == 3){
+                printf("No such file or directory\n");
             }
             return 1;
         } else {

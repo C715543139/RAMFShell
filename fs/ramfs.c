@@ -13,7 +13,7 @@ node *root = NULL;
 FD fdesc[NRFD];
 
 enum {
-    ENOTDIR, EEXIST, ENOENT //0,1,2
+    ENOTDIR, EEXIST, ENOENT,SPECIAL //0,1,2,3
 } status;
 
 int check_status() {
@@ -152,7 +152,7 @@ int ropen(const char *pathname, int flags) {
             if (is_slash_end || strlen(directions[count - 1]) > 32) { //basename
                 for (int i = 0; i < count; ++i) free(directions[i]);
                 free(pathname_simple);
-                status = ENOENT;
+                status = SPECIAL;
                 return -1;
             }
 
