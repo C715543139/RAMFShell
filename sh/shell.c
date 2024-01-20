@@ -69,15 +69,13 @@ int smkdir(const char *pathname) {
     if (dir != NULL) {
         printf("mkdir: cannot create directory '%s': File exists\n", pathname);
         return 1;
-    } else {
-        if (rmkdir(pathname) == -1) {
-            if (check_status() == 0) {
-                printf("mkdir: cannot create directory '%s': Not a directory\n", pathname);
-            } else if (check_status() == 2) {
-                printf("mkdir: cannot create directory '%s': No such file or directory\n", pathname);
-            }
-            return 1;
+    } else if (rmkdir(pathname) == -1) {
+        if (check_status() == 0) {
+            printf("mkdir: cannot create directory '%s': Not a directory\n", pathname);
+        } else if (check_status() == 2) {
+            printf("mkdir: cannot create directory '%s': No such file or directory\n", pathname);
         }
+        return 1;
     }
     return 0;
 }

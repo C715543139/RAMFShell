@@ -99,11 +99,11 @@ node *find(const char *pathname, bool simple) {
     split_path(directions,pathname_simple,&count,&is_slash_end);
 
     for (int i = 0; i < count; ++i) {
-        if (now == NULL || now->type == FNODE) {
+        if (now == NULL || (now->type == DNODE && now->nrde == 0)) {
             now = NULL;
             status = ENOENT;
             break;
-        } else if (now->nrde == 0) {
+        } else if (now->type == FNODE) {
             now = NULL;
             status = ENOTDIR;
             break;
