@@ -87,7 +87,9 @@ int main() {
     assert(smkdir("/home///l/sss/") == 1);
     assert(swhich("ls") == 0);
     assert(stouch("/usr/bin/ls") == 0);
+    assert(smkdir("/usr/bin/lf") == 0);
     assert(swhich("ls") == 0);
+    assert(swhich("lf") == 1);
     assert(secho("hello world\\n") == 0);
     assert(secho("\\\\$PATH is \\\\\\$PATH\\\\") == 0);
     assert(sls("/usr/bin/1/1/1/3/qdwadsd/sojfasf") == 0);
