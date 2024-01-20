@@ -56,6 +56,8 @@ int scat(const char *pathname) {
     } else if (file->type == DNODE) {
         printf("cat: %s: Is a directory\n", pathname);
         return 1;
+    } else if (file->type == FNODE && pathname[strlen(pathname) - 1] == '/') {
+        printf("cat: %s: Is a directory\n", pathname);
     }
 
     for (int i = 0; i < file->size; ++i) {
@@ -73,6 +75,8 @@ int smkdir(const char *pathname) {
             printf("mkdir: cannot create directory '%s': Not a directory\n", pathname);
         } else if (check_status() == 2) {
             printf("mkdir: cannot create directory '%s': No such file or directory\n", pathname);
+        } else if (check_status() == 1) {
+            printf("mkdir: cannot create directory '%s': File exists\n", pathname);
         }
         return 1;
     }
@@ -84,7 +88,7 @@ int stouch(const char *pathname) {
 
     node *file = find(pathname, false);
     if (file == NULL) {
-        int fd = ropen(pathname, O_CREAT | O_RDONLY);
+        int fd = ropen(pathname, O_CREAT);
         if (fd == -1) {
             if (check_status() == 0) {
                 printf("touch: cannot touch '%s': Not a directory\n", pathname);
@@ -97,6 +101,7 @@ int stouch(const char *pathname) {
             return 0;
         }
     } else if (file->type == FNODE && pathname[strlen(pathname) - 1] == '/') {
+        printf("touch: cannot touch '%s': Not a directory\n", pathname);
         return 1;
     }
     return 0;
@@ -107,14 +112,14 @@ int secho(const char *content) {
 
     size_t len = strlen(content);
     for (int i = 0; i < len - 1; ++i) {
-        if (content[i] == '\\' && content[i + 1] != '\\') {
-            printf("%c", content[i + 1]);
+        if (content[i] == '\\' && content[i + 1] == '$') {
+            printf("$");
             i++;
         } else if (content[i] == '\\' && content[i + 1] == '\\') {
             printf("\\");
             i++;
-        } else if (content[i] == '\\' && content[i + 1] == '$') {
-            printf("$");
+        } else if (content[i] == '\\' && content[i + 1] != '\\') {
+            printf("%c", content[i + 1]);
             i++;
         } else if (i < len - 4 &&
                    (content[i] == '$' && content[i + 1] == 'P' && content[i + 2] == 'A' && content[i + 3] == 'T' &&
