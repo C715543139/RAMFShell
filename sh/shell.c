@@ -122,10 +122,10 @@ int secho(const char *content) {
             output[output_len - 1] = '$';
             output[output_len] = 0;
             i += 2;
-        } else if (input[i] == '\\' && input[i + 1] == '\\') {
+        } else if (input[i] == '\\') {
             output_len++;
             output = realloc(output,(output_len + 1) * sizeof(char));
-            output[output_len - 1] = '\\';
+            output[output_len - 1] = input[i + 1];
             output[output_len] = 0;
             i += 2;
         } else if (input[i] == '$' && input[i + 1] == 'P' && input[i + 2] == 'A' && input[i + 3] == 'T' &&
