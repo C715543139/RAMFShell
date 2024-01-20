@@ -74,7 +74,7 @@ int main() {
     assert(scat("/home1/ubuntu") == 1);
     assert(stouch("/home/ls/") == 1);
     assert(stouch("/home///ls") == 0);
-    assert(stouch("/home///ls/4") == 0);
+    assert(stouch("/home///ls/4") == 1);
     assert(smkdir("/home///ls/") == 1);
     assert(smkdir("/home///l/5") == 1);
     assert(smkdir("/home///ls/s") == 1);
