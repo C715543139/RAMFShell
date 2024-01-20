@@ -116,13 +116,7 @@ int secho(const char *content) {
     size_t output_len = 0;
     strcpy(input, content);
     for (int i = 0; i < len - 5;) {
-        if (input[i] == '\\' && input[i + 1] == '$') {
-            output_len++;
-            output = realloc(output,(output_len + 1) * sizeof(char));
-            output[output_len - 1] = '$';
-            output[output_len] = 0;
-            i += 2;
-        } else if (input[i] == '\\') {
+        if (input[i] == '\\') {
             output_len++;
             output = realloc(output,(output_len + 1) * sizeof(char));
             output[output_len - 1] = input[i + 1];
