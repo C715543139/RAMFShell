@@ -26,22 +26,22 @@ int sls(const char *pathname) {
         } else if (check_status() == 0) {
             printf("ls: cannot access '%s': Not a directory\n", pathname);
         }
-        return 2;
+        return 1;
     } else if(dir->type == FNODE && pathname[strlen(pathname) - 1] == '/'){
         printf("ls: cannot access '%s': Not a directory\n", pathname);
-        return 2;
+        return 1;
     }
 
     if (dir->type == FNODE) {
         printf("%s\n", dir->name);
     } else {
         for (int i = 0; i < dir->nrde; ++i) {
-            if (dir->dirents[i]->type == FNODE && dir->dirents[i]->name[0] != '.') {
+            if (dir->dirents[i]->type == FNODE) {
                 printf("%s ", dir->dirents[i]->name);
             }
         }
         for (int i = 0; i < dir->nrde; ++i) {
-            if (dir->dirents[i]->type == DNODE && dir->dirents[i]->name[0] != '.') {
+            if (dir->dirents[i]->type == DNODE) {
                 printf("%s ", dir->dirents[i]->name);
             }
         }
