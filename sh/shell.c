@@ -97,6 +97,8 @@ int stouch(const char *pathname) {
             rclose(fd);
             return 0;
         }
+    } else if(file->type == FNODE && pathname[strlen(pathname) - 1] == '/'){
+        return 1;
     }
     return 0;
 }
