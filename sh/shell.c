@@ -33,7 +33,7 @@ int sls(const char *pathname) {
     }
 
     if (dir->type == FNODE) {
-        printf("%s\n", pathname);
+        printf("%s\n", dir->name);
     } else {
         for (int i = 0; i < dir->nrde; ++i) {
             printf("%s%c", dir->dirents[i]->name, " \n"[i == dir->nrde - 1]);
@@ -68,11 +68,7 @@ int scat(const char *pathname) {
 int smkdir(const char *pathname) {
     print("mkdir %s\n", pathname);
 
-    node *dir = find(pathname, false);
-    if (dir != NULL) {
-        printf("mkdir: cannot create directory '%s': File exists\n", pathname);
-        return 1;
-    } else if (rmkdir(pathname) == -1) {
+    if (rmkdir(pathname) == -1) {
         if (check_status() == 0) {
             printf("mkdir: cannot create directory '%s': Not a directory\n", pathname);
         } else if (check_status() == 2) {
