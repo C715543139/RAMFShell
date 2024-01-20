@@ -72,6 +72,8 @@ int main() {
     assert(stouch("/home///ls") == 0);
     assert(smkdir("/home///ls/") == 1);
     assert(smkdir("/home///ls/s") == 1);
+    assert(smkdir("/home///l/") == 0);
+    assert(smkdir("/home///l/sss") == 0);
     assert(swhich("ls") == 0);
     assert(stouch("/usr/bin/ls") == 0);
     assert(swhich("ls") == 0);
