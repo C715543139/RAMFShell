@@ -68,12 +68,23 @@ int main() {
     init_shell();
 
     assert(scat("/home/ubuntu/.bashrc") == 0);
-    assert(stouch("/home/ls") == 0);
-    assert(stouch("/home///ls/") == 1);
+    assert(scat("/home/ubuntu/.bashrc/") == 1);
+    assert(scat("/home/ubuntu/") == 1);
+    assert(scat("/home/ubuntu") == 1);
+    assert(scat("/home1/ubuntu") == 1);
+    assert(stouch("/home/ls/") == 1);
+    assert(stouch("/home///ls") == 0);
+    assert(stouch("/home///ls/4") == 0);
     assert(smkdir("/home///ls/") == 1);
+    assert(smkdir("/home///l/5") == 1);
     assert(smkdir("/home///ls/s") == 1);
+    assert(scat("/home///ls/s") == 1);
     assert(smkdir("/home///l/") == 0);
     assert(smkdir("/home///l/sss/") == 0);
+    assert(smkdir("/home///l/sss/") == 1);
+    assert(stouch("/home///l/sss/") == 0);
+    assert(stouch("/home///l/sss/|s") == 0);
+    assert(smkdir("/home///l/sss/") == 1);
     assert(swhich("ls") == 0);
     assert(stouch("/usr/bin/ls") == 0);
     assert(swhich("ls") == 0);
