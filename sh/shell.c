@@ -160,7 +160,8 @@ int swhich(const char *cmd) {
 
     int found = -1;
     for (int i = 0; i < count; ++i) {
-        if (find_file_below(find(directions[i], false), cmd) != NULL) {
+        node *file = find_file_below(find(directions[i], false), cmd);
+        if (file != NULL && file->type == FNODE) {
             found = i;
             break;
         }
