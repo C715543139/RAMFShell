@@ -36,12 +36,12 @@ int sls(const char *pathname) {
         printf("%s\n", dir->name);
     } else {
         for (int i = 0; i < dir->nrde; ++i) {
-            if (dir->dirents[i]->type == FNODE) {
+            if (dir->dirents[i]->type == FNODE && dir->dirents[i]->name[0] != '.') {
                 printf("%s ", dir->dirents[i]->name);
             }
         }
         for (int i = 0; i < dir->nrde; ++i) {
-            if (dir->dirents[i]->type == DNODE) {
+            if (dir->dirents[i]->type == DNODE && dir->dirents[i]->name[0] != '.') {
                 printf("%s ", dir->dirents[i]->name);
             }
         }
