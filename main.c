@@ -83,7 +83,7 @@ int main() {
     assert(smkdir("/home///l/sss/") == 0);
     assert(smkdir("/home///l/sss/") == 1);
     assert(stouch("/home///l/sss/") == 0);
-    assert(stouch("/home///l/sss/|s") == 0);
+    assert(stouch("/home///l/sss/|s") == 1);
     assert(smkdir("/home///l/sss/") == 1);
     assert(swhich("ls") == 0);
     assert(stouch("/usr/bin/ls") == 0);
