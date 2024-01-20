@@ -14,7 +14,6 @@
 #include <stdbool.h>
 
 char *PATH = NULL;
-long PATH_LEN = 0;
 
 int sls(const char *pathname) {
     print("ls %s\n", pathname);
@@ -140,7 +139,6 @@ int swhich(const char *cmd) {
         while (PATH[p] != ':' && PATH[p] != 0)p++;
         char *temp = calloc(p - q + 1, (p - q + 1) * sizeof(char));
         strncpy(temp, &PATH[q], p - q);
-        temp[p - q] = 0;
         directions[count++] = temp;
         if (PATH[p] == 0)break;
         p++;
@@ -155,13 +153,7 @@ int swhich(const char *cmd) {
         }
     }
     if (found != -1) {
-        int tail = 0;
-        while (directions[found][tail] != 0)tail++;
-        if (directions[found][tail - 1] == '/') {
-            printf("%s%s\n", directions[found], cmd);
-        } else {
-            printf("%s/%s\n", directions[found], cmd);
-        }
+        printf("%s/%s\n", directions[found], cmd);
         for (int i = 0; i < count; ++i) free(directions[i]);
         return 0;
     } else {
