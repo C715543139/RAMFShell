@@ -27,23 +27,16 @@ int sls(const char *pathname) {
             printf("ls: cannot access '%s': Not a directory\n", pathname);
         }
         return 1;
-    } else if(dir->type == FNODE && pathname[strlen(pathname) - 1] == '/'){
+    } else if (dir->type == FNODE && pathname[strlen(pathname) - 1] == '/') {
         printf("ls: cannot access '%s': Not a directory\n", pathname);
         return 1;
     }
 
     if (dir->type == FNODE) {
-        printf("%s\n", dir->name);
+        printf("%s\n", pathname);
     } else {
         for (int i = 0; i < dir->nrde; ++i) {
-            if (dir->dirents[i]->type == FNODE) {
-                printf("%s ", dir->dirents[i]->name);
-            }
-        }
-        for (int i = 0; i < dir->nrde; ++i) {
-            if (dir->dirents[i]->type == DNODE) {
-                printf("%s ", dir->dirents[i]->name);
-            }
+            printf("%s ", dir->dirents[i]->name);
         }
         printf("\n");
     }
@@ -104,7 +97,7 @@ int stouch(const char *pathname) {
             rclose(fd);
             return 0;
         }
-    } else if(file->type == FNODE && pathname[strlen(pathname) - 1] == '/'){
+    } else if (file->type == FNODE && pathname[strlen(pathname) - 1] == '/') {
         return 1;
     }
     return 0;
