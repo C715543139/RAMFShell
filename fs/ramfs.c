@@ -9,7 +9,7 @@
 node *root = NULL;
 
 #define MAX_LEN 65540
-#define NRFD 4096
+#define NRFD 8192
 FD fdesc[NRFD];
 
 enum {
