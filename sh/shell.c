@@ -26,7 +26,7 @@ int sls(const char *pathname) {
         } else if (check_status() == 0) {
             printf("ls: cannot access '%s': Not a directory\n", pathname);
         }
-        return 1;
+        return 2;
     }
 
     if (dir->type == FNODE) {
