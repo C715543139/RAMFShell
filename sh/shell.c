@@ -33,7 +33,7 @@ int sls(const char *pathname) {
     }
 
     if (dir->type == FNODE) {
-        printf("%s\n", dir->name);
+        printf("%s\n", pathname);
     } else {
         for (int i = 0; i < dir->nrde; ++i) {
             printf("%s%c", dir->dirents[i]->name, " \n"[i == dir->nrde - 1]);
