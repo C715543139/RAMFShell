@@ -58,6 +58,7 @@ int scat(const char *pathname) {
         return 1;
     } else if (file->type == FNODE && pathname[strlen(pathname) - 1] == '/') {
         printf("cat: %s: Is a directory\n", pathname);
+        return 1;
     }
 
     for (int i = 0; i < file->size; ++i) {
