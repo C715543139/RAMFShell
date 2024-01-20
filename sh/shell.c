@@ -64,7 +64,7 @@ int scat(const char *pathname) {
     for (int i = 0; i < file->size; ++i) {
         printf("%c", ((char *) (file->content))[i]);
     }
-    printf("\n");
+    if(file->size != 0)printf("\n");
     return 0;
 }
 
