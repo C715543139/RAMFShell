@@ -246,37 +246,32 @@ int rclose(int fd) {
         return -1;
     }
 
-    fdesc[fd].offset = 0;
-    fdesc[fd].used = false;
-    fdesc[fd].f = NULL;
-    fdesc[fd].flags = 0;
+    fdesc[fd] = (FD){
+        .offset = 0,
+        .used = false,
+        .f = NULL,
+        .flags = 0
+    };
     return 0;
 }
 
 ssize_t rwrite(int fd, const void *buf, size_t count) {
-    if (fd < 0 || fdesc[fd].used == false || fdesc[fd].f->type == DNODE || buf == NULL) { //ebadf or eisdir
+    if (fd < 0 || fdesc[fd].used == false || fdesc[fd].f->type == DNODE || buf == NULL) { // ebadf or eisdir
         return -1;
     }
 
-    int rw = 0; //rdonly 0,wronly 1,rdwr 2
+    int rw = 0; // rdonly 0,wronly 1,rdwr 2
     if ((fdesc[fd].flags & O_RDONLY) == O_RDONLY) rw = 0;
     if ((fdesc[fd].flags & O_WRONLY) == O_WRONLY) rw = 1;
     if ((fdesc[fd].flags & O_RDWR) == O_RDWR && rw == 0) rw = 2;
 
-    if (rw == 0) {//ebadf
+    if (rw == 0) { // ebadf
         return -1;
     }
 
-    if (count + fdesc[fd].offset >= LONG_MAX)
-        return -1;
-
-    if (count == 0)
-        return 0;
-
     if (count + fdesc[fd].offset > fdesc[fd].f->size) {
         fdesc[fd].f->content = realloc(fdesc[fd].f->content, count + fdesc[fd].offset);
-
-        if (fdesc[fd].offset > fdesc[fd].f->size) {
+        if (fdesc[fd].offset > fdesc[fd].f->size) { // fill with '\0'
             memset((char *) fdesc[fd].f->content + fdesc[fd].f->size, 0, count + fdesc[fd].offset - fdesc[fd].f->size);
         }
         fdesc[fd].f->size = count + fdesc[fd].offset;
