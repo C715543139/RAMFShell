@@ -7,7 +7,6 @@
 #define print(...)
 #endif
 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

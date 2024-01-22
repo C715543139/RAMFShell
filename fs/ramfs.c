@@ -4,7 +4,6 @@
 #include <endian.h>
 #include <stdlib.h>
 #include <string.h>
-#include "limits.h"
 
 #define NRFD 8192
 FD fdesc[NRFD];
@@ -132,8 +131,8 @@ int ropen(const char *pathname, int flags) {
     }
 
     bool append = flags & O_APPEND,
-            create = flags & O_CREAT,
-            truncate = flags & O_TRUNC;
+         create = flags & O_CREAT,
+         truncate = flags & O_TRUNC;
     int rw = 0; // rdonly 0,wronly 1,rdwr 2
     if ((flags & O_RDONLY) == O_RDONLY) rw = 0;
     if ((flags & O_WRONLY) == O_WRONLY) rw = 1;
@@ -413,7 +412,7 @@ int rrmdir(const char *pathname) {
     }
 
     node *temp = FindNode(pathname, false);
-    if (temp == NULL || temp->type == FNODE || temp->nrde != 0) {
+    if (temp == NULL || temp->type == FNODE || temp->nrde != 0 || temp == root) {
         return -1;
     }
 
