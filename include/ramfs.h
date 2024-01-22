@@ -13,6 +13,8 @@
 #define SEEK_CUR 1
 #define SEEK_END 2
 
+#define MAX_LEN 65540
+
 typedef struct node {
   enum { FNODE, DNODE } type;
   struct node **dirents; // if DTYPE
@@ -34,9 +36,9 @@ typedef struct FD {
     node *f;
 } FD;
 
-int check_status();
-node *find_file_below(node *now, const char *name);
-void reduce_slashes(const char *input, char *output);
+int CheckErrorType();
+node *FindNodeBelow(node *now, const char *name);
+void ReduceSlashes(const char *input, char *output);
 int ropen(const char *pathname, int flags);
 int rclose(int fd);
 ssize_t rwrite(int fd, const void *buf, size_t count);
@@ -47,4 +49,4 @@ int rrmdir(const char *pathname);
 int runlink(const char *pathname);
 void init_ramfs();
 void close_ramfs();
-node *find(const char *pathname,bool simple);
+node *FindNode(const char *pathname, bool simplified);

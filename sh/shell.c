@@ -18,11 +18,11 @@ char *PATH = NULL;
 int sls(const char *pathname) {
     print("ls %s\n", pathname);
 
-    node *dir = find(pathname, false);
+    node *dir = FindNode(pathname, false);
     if (dir == NULL) {
-        if (check_status() == 2) {
+        if (CheckErrorType() == 2) {
             printf("ls: cannot access '%s': No such file or directory\n", pathname);
-        } else if (check_status() == 0) {
+        } else if (CheckErrorType() == 0) {
             printf("ls: cannot access '%s': Not a directory\n", pathname);
         }
         return 1;
@@ -45,11 +45,11 @@ int sls(const char *pathname) {
 int scat(const char *pathname) {
     print("cat %s\n", pathname);
 
-    node *file = find(pathname, false);
+    node *file = FindNode(pathname, false);
     if (file == NULL) {
-        if (check_status() == 2) {
+        if (CheckErrorType() == 2) {
             printf("cat: %s: No such file or directory\n", pathname);
-        } else if (check_status() == 0) {
+        } else if (CheckErrorType() == 0) {
             printf("cat: %s: Not a directory\n", pathname);
         }
         return 1;
@@ -72,11 +72,11 @@ int smkdir(const char *pathname) {
     print("mkdir %s\n", pathname);
 
     if (rmkdir(pathname) == -1) {
-        if (check_status() == 0) {
+        if (CheckErrorType() == 0) {
             printf("mkdir: cannot create directory '%s': Not a directory\n", pathname);
-        } else if (check_status() == 2) {
+        } else if (CheckErrorType() == 2) {
             printf("mkdir: cannot create directory '%s': No such file or directory\n", pathname);
-        } else if (check_status() == 1) {
+        } else if (CheckErrorType() == 1) {
             printf("mkdir: cannot create directory '%s': File exists\n", pathname);
         }
         return 1;
@@ -87,15 +87,15 @@ int smkdir(const char *pathname) {
 int stouch(const char *pathname) {
     print("touch %s\n", pathname);
 
-    node *file = find(pathname, false);
+    node *file = FindNode(pathname, false);
     if (file == NULL) {
         int fd = ropen(pathname, O_CREAT);
         if (fd == -1) {
-            if (check_status() == 0) {
+            if (CheckErrorType() == 0) {
                 printf("touch: cannot touch '%s': Not a directory\n", pathname);
-            } else if (check_status() == 2) {
+            } else if (CheckErrorType() == 2) {
                 printf("touch: cannot touch '%s': No such file or directory\n", pathname);
-            } else if(check_status() == 3){
+            } else if(CheckErrorType() == 3){
                 printf("No such file or directory\n");
             }
             return 1;
@@ -113,29 +113,29 @@ int stouch(const char *pathname) {
 int secho(const char *content) {
     print("echo %s\n", content);
 
-    size_t len = strlen(content) + 10;
-    char *input = calloc(len, len * sizeof(char));
+    size_t lenCon = strlen(content);
+    char *input = calloc(lenCon + 10, (lenCon + 10) * sizeof(char));
     char *output = NULL;
-    size_t output_len = 0;
+    size_t lenOut = 0;
     strcpy(input, content);
-    for (int i = 0; i < len - 5;) {
+    for (int i = 0; i < lenCon - 5;) {
         if (input[i] == '\\') {
-            output_len++;
-            output = realloc(output,(output_len + 1) * sizeof(char));
-            output[output_len - 1] = input[i + 1];
-            output[output_len] = 0;
+            lenOut++;
+            output = realloc(output, (lenOut + 1) * sizeof(char));
+            output[lenOut - 1] = input[i + 1];
+            output[lenOut] = 0;
             i += 2;
         } else if (input[i] == '$' && input[i + 1] == 'P' && input[i + 2] == 'A' && input[i + 3] == 'T' &&
                     input[i + 4] == 'H') {
-            output_len += strlen(PATH);
-            output = realloc(output,(output_len + 1) * sizeof(char));
+            lenOut += strlen(PATH);
+            output = realloc(output, (lenOut + 1) * sizeof(char));
             strcat(output,PATH);
             i += 5;
         } else {
-            output_len++;
-            output = realloc(output,(output_len + 1) * sizeof(char));
-            output[output_len - 1] = input[i];
-            output[output_len] = 0;
+            lenOut++;
+            output = realloc(output, (lenOut + 1) * sizeof(char));
+            output[lenOut - 1] = input[i];
+            output[lenOut] = 0;
             i++;
         }
     }
@@ -148,7 +148,7 @@ int swhich(const char *cmd) {
 
     if (PATH == NULL)return 1;
 
-    char *directions[65540];
+    char *directions[MAX_LEN];
     int count = 0, p = 0, q = 0;
     while (true) {
         while (PATH[p] != ':' && PATH[p] != 0)p++;
@@ -162,7 +162,7 @@ int swhich(const char *cmd) {
 
     int found = -1;
     for (int i = 0; i < count; ++i) {
-        node *file = find_file_below(find(directions[i], false), cmd);
+        node *file = FindNodeBelow(FindNode(directions[i], false), cmd);
         if (file != NULL && file->type == FNODE) {
             found = i;
             break;
@@ -180,13 +180,12 @@ int swhich(const char *cmd) {
 
 
 void init_shell() {
-    //read .bashrc
-    node *bash = find("/home/ubuntu/.bashrc", true);
+    node *bash = FindNode("/home/ubuntu/.bashrc", true);
 
     if (bash == NULL)return;
 
     char *buf = malloc((bash->size + 1) * sizeof(char));
-    reduce_slashes(bash->content, buf);
+    ReduceSlashes(bash->content, buf);
 
     char *temp = calloc(bash->size + 1, (bash->size + 1) * sizeof(char));
     char *p = strstr(buf, "export PATH=");
