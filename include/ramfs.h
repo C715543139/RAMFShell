@@ -37,8 +37,8 @@ typedef struct FD {
 } FD;
 
 int CheckErrorType();
-node *FindNodeBelow(node *now, const char *name);
-void ReduceSlashes(const char *input, char *output);
+node *FindNodeBelow(node *dir, const char *name);
+char *ReduceSlashes(const char *input);
 int ropen(const char *pathname, int flags);
 int rclose(int fd);
 ssize_t rwrite(int fd, const void *buf, size_t count);

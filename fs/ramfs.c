@@ -12,7 +12,7 @@ FD fdesc[NRFD];
 node *root = NULL;
 
 enum {
-    ENOTDIR, EEXIST, ENOENT,SPECIAL //0,1,2,3
+    ENOTDIR, EEXIST, ENOENT, SPECIAL //0,1,2,3
 } g_error;
 
 int CheckErrorType() {
@@ -25,50 +25,50 @@ char *strdup(const char *content) {
     return new;
 }
 
-void SplitPathname(char **directions, const char *pathnameSimplified, int *count, bool *isSlashEnd){
+void SplitPathname(char **directions, const char *pathnameSimplified, int *count, bool *isSlashEnd) {
     *count = 0;
     *isSlashEnd = false;
     char *p, *q;
 
     p = strchr(pathnameSimplified, '/');
-    while (p != NULL){
-        p++;
-        q = strchr(p,'/');
+    while (p != NULL) {
+        q = strchr(++p, '/');
 
         char *temp;
-        if(q == NULL){
+        if (q == NULL) { // end is '\0', so use strdup
             temp = strdup(p);
-        } else if(*q == '/' && *(q + 1) == 0){
+        } else if (*q == '/' && *(q + 1) == 0) {
+            *isSlashEnd = true;
             *q = 0;
             temp = strdup(p);
-            *isSlashEnd = true;
             q = NULL;
-        } else {
-            temp = calloc(q - p + 1,(q - p + 1) * sizeof(char));
-            strncpy(temp,p,q - p);
+        } else { // end is not '/0', so calculate
+            temp = calloc(q - p + 1, (q - p + 1) * sizeof(char));
+            strncpy(temp, p, q - p);
         }
-        directions[*count] = temp;
-        *count += 1;
 
+        directions[(*count)++] = temp;
         p = q;
     }
 }
 
-void ReduceSlashes(const char *input, char *output) {
+char *ReduceSlashes(const char *input) {
+    char *output = calloc(MAX_LEN,MAX_LEN * sizeof(char));
     int i, j = 0;
     for (i = 0; input[i] != 0; ++i) {
-        if (input[i] == '/' && input[i + 1] == '/')
+        if (input[i] == '/' && input[i + 1] == '/'){
             continue;
+        }
         output[j++] = input[i];
     }
-    output[j] = 0;
+    return output;
 }
 
-node *FindNodeBelow(node *now, const char *name) {
-    if (now != NULL && now->type == DNODE) {
-        for (int i = 0; i < now->nrde; ++i) {
-            if (strcmp(now->dirents[i]->name, name) == 0) {
-                return now->dirents[i];
+node *FindNodeBelow(node *dir, const char *name) {
+    if (dir != NULL && dir->type == DNODE) {
+        for (int i = 0; i < dir->nrde; ++i) {
+            if (strcmp(dir->dirents[i]->name, name) == 0) {
+                return dir->dirents[i];
             }
         }
     }
@@ -77,13 +77,16 @@ node *FindNodeBelow(node *now, const char *name) {
 }
 
 node *FindNode(const char *pathname, bool simplified) {
-    if (pathname == NULL)return NULL;
+    if (pathname == NULL){
+        return NULL;
+    }
 
-    char *pathnameSimplified = malloc(MAX_LEN * sizeof(char)); //reduce slashes
+    char *pathnameSimplified;
     if (simplified) {
+        pathnameSimplified = malloc(MAX_LEN * sizeof(char));
         strcpy(pathnameSimplified, pathname);
     } else {
-        ReduceSlashes(pathname, pathnameSimplified);
+        pathnameSimplified = ReduceSlashes(pathname);
     }
 
     if (strcmp("/", pathnameSimplified) == 0) {
@@ -132,11 +135,11 @@ int ropen(const char *pathname, int flags) {
 
     if (file == NULL) {
         if (create == true) { //create
-            char *pathnameSimplified = malloc((strlen(pathname) + 1) * sizeof(char)); //reduce slashes
-            ReduceSlashes(pathname, pathnameSimplified);
+            char *pathnameSimplified = ReduceSlashes(pathname);
 
             for (int i = 0; pathnameSimplified[i] != 0; ++i) { //einval
-                if (isalnum(pathnameSimplified[i]) == 0 && pathnameSimplified[i] != '.' && pathnameSimplified[i] != '/') {
+                if (isalnum(pathnameSimplified[i]) == 0 && pathnameSimplified[i] != '.' &&
+                    pathnameSimplified[i] != '/') {
                     free(pathnameSimplified);
                     g_error = ENOENT;
                     return -1;
@@ -170,7 +173,8 @@ int ropen(const char *pathname, int flags) {
                 temp->upper = root;
             } else {
                 char *upperName = strdup(pathnameSimplified);
-                memset(&upperName[strlen(pathnameSimplified) - strlen(directions[count - 1]) - 1], 0, strlen(directions[count - 1]) + 1);
+                memset(&upperName[strlen(pathnameSimplified) - strlen(directions[count - 1]) - 1], 0,
+                       strlen(directions[count - 1]) + 1);
 
                 node *upperNode = FindNode(upperName, true);
                 if (upperNode == NULL || upperNode->type == FNODE) {//enoent or enotdir
@@ -204,7 +208,7 @@ int ropen(const char *pathname, int flags) {
 
     if (file->type == DNODE && rw != 0) {
         return -1;
-    } else if(file->type == FNODE && pathname[strlen(pathname) - 1] == '/'){
+    } else if (file->type == FNODE && pathname[strlen(pathname) - 1] == '/') {
         g_error = ENOENT;
         return -1;
     }
@@ -263,7 +267,7 @@ ssize_t rwrite(int fd, const void *buf, size_t count) {
     if (count + fdesc[fd].offset >= LONG_MAX)
         return -1;
 
-    if(count == 0)
+    if (count == 0)
         return 0;
 
     if (count + fdesc[fd].offset > fdesc[fd].f->size) {
@@ -342,8 +346,7 @@ off_t rseek(int fd, off_t offset, int whence) {
 int rmkdir(const char *pathname) {
     if (pathname == NULL) return -1;
 
-    char *pathnameSimplified = malloc(MAX_LEN * sizeof(char)); //reduce slashes
-    ReduceSlashes(pathname, pathnameSimplified);
+    char *pathnameSimplified = ReduceSlashes(pathname);
 
     if (FindNode(pathnameSimplified, true) != NULL) { //eexist
         free(pathnameSimplified);
@@ -387,7 +390,8 @@ int rmkdir(const char *pathname) {
 
     } else {
         char *upperName = strdup(pathnameSimplified);
-        memset(&upperName[strlen(pathnameSimplified) - strlen(directions[count - 1]) - 1], 0, strlen(directions[count - 1]) + 1);
+        memset(&upperName[strlen(pathnameSimplified) - strlen(directions[count - 1]) - 1], 0,
+               strlen(directions[count - 1]) + 1);
 
         node *upperNode = FindNode(upperName, true);
         if (upperNode == NULL || upperNode->type == FNODE) {//enoent or enotdir
