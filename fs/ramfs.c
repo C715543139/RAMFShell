@@ -140,19 +140,16 @@ int ropen(const char *pathname, int flags) {
     if ((flags & O_RDWR) == O_RDWR && rw == 0) rw = 2;
 
     node *file = FindNode(pathname, false);
-
     if (file == NULL) {
         if (create == false) {
             return -1;
         } else { // create
-            char *pathnameSimplified = ReduceSlashes(pathname);
-
-            if (CheckLegal(pathnameSimplified) == false) { // illegal
-                free(pathnameSimplified);
+            if (CheckLegal(pathname) == false) { // illegal
                 g_error = ENOENT;
                 return -1;
             }
 
+            char *pathnameSimplified = ReduceSlashes(pathname);
             char *directions[MAX_LEN];
             int count = 0;
             bool isSlashEnd = false;
@@ -166,13 +163,14 @@ int ropen(const char *pathname, int flags) {
             }
 
             node *temp = malloc(sizeof(node));
-            *temp = (node){
-                .type = FNODE,
-                .dirents = NULL,
-                .content = NULL,
-                .nrde = 0,
-                .name = strdup(directions[count - 1]),
-                .size = 0
+            *temp = (node) {
+                    .type = FNODE,
+                    .nrde = 0,
+                    .size = 0,
+                    .upper = NULL,
+                    .dirents = NULL,
+                    .content = NULL,
+                    .name = strdup(directions[count - 1]),
             };
 
             if (count == 1) { // below root
@@ -216,7 +214,7 @@ int ropen(const char *pathname, int flags) {
 
     int fdescAvailable;
     for (fdescAvailable = 0; fdescAvailable < NRFD; ++fdescAvailable) {
-        if (fdesc[fdescAvailable].used == false){
+        if (fdesc[fdescAvailable].used == false) {
             break;
         }
     }
@@ -242,15 +240,15 @@ int ropen(const char *pathname, int flags) {
 }
 
 int rclose(int fd) {
-    if (fd < 0 || fdesc[fd].used == false){
+    if (fd < 0 || fdesc[fd].used == false) {
         return -1;
     }
 
-    fdesc[fd] = (FD){
-        .offset = 0,
-        .used = false,
-        .f = NULL,
-        .flags = 0
+    fdesc[fd] = (FD) {
+            .offset = 0,
+            .used = false,
+            .f = NULL,
+            .flags = 0
     };
     return 0;
 }
@@ -283,37 +281,35 @@ ssize_t rwrite(int fd, const void *buf, size_t count) {
 }
 
 ssize_t rread(int fd, void *buf, size_t count) {
-    if (fd < 0 || fdesc[fd].used == false || fdesc[fd].f->type == DNODE || buf == NULL) { //ebadf or eisdir
+    if (fd < 0 || fdesc[fd].used == false || fdesc[fd].f->type == DNODE || buf == NULL) { // ebadf or eisdir
         return -1;
     }
 
-    int rw = 0; //rdonly 0,wronly 1,rdwr 2
+    int rw = 0; // rdonly 0,wronly 1,rdwr 2
     if ((fdesc[fd].flags & O_RDONLY) == O_RDONLY) rw = 0;
     if ((fdesc[fd].flags & O_WRONLY) == O_WRONLY) rw = 1;
     if ((fdesc[fd].flags & O_RDWR) == O_RDWR && rw == 0) rw = 2;
 
-    if (rw == 1) {//ebadf
+    if (rw == 1) { // ebadf
         return -1;
     }
-
-    if (count + fdesc[fd].offset >= LONG_MAX)
-        return -1;
 
     if (fdesc[fd].offset >= fdesc[fd].f->size || count == 0) {
         return 0;
-    } else if (count + fdesc[fd].offset <= fdesc[fd].f->size) {
-        memcpy(buf, (char *) fdesc[fd].f->content + fdesc[fd].offset, count);
-        fdesc[fd].offset += count;
-    } else {
+    } else if (count + fdesc[fd].offset > fdesc[fd].f->size) {
         count = fdesc[fd].f->size - fdesc[fd].offset;
-        memcpy(buf, (char *) fdesc[fd].f->content + fdesc[fd].offset, count);
-        fdesc[fd].offset = fdesc[fd].f->size;
     }
+
+    memcpy(buf, (char *) fdesc[fd].f->content + fdesc[fd].offset, count);
+    fdesc[fd].offset += count;
     return count;
 }
 
 off_t rseek(int fd, off_t offset, int whence) {
-    if (fd < 0 || fd >= NRFD)return -1;
+    if (fd < 0 || fd >= NRFD) {
+        return -1;
+    }
+
     switch (whence) {
         case SEEK_SET:
             if (offset < 0) {
@@ -342,22 +338,20 @@ off_t rseek(int fd, off_t offset, int whence) {
 }
 
 int rmkdir(const char *pathname) {
-    if (pathname == NULL) return -1;
-
-    char *pathnameSimplified = ReduceSlashes(pathname);
-
-    if (FindNode(pathnameSimplified, true) != NULL) { //eexist
-        free(pathnameSimplified);
-        g_error = EEXIST;
+    if (pathname == NULL) {
         return -1;
     }
 
-    for (int i = 0; pathnameSimplified[i] != 0; ++i) { //einval
-        if (isalnum(pathnameSimplified[i]) == 0 && pathnameSimplified[i] != '.' && pathnameSimplified[i] != '/') {
-            free(pathnameSimplified);
-            g_error = ENOENT;
-            return -1;
-        }
+    if (CheckLegal(pathname) == false) {
+        g_error = ENOENT;
+        return -1;
+    }
+
+    char *pathnameSimplified = ReduceSlashes(pathname);
+    if (FindNode(pathnameSimplified, true) != NULL) { // eexist
+        free(pathnameSimplified);
+        g_error = EEXIST;
+        return -1;
     }
 
     char *directions[MAX_LEN];
@@ -365,7 +359,7 @@ int rmkdir(const char *pathname) {
     bool isSlashEnd = false;
     SplitPathname(directions, pathnameSimplified, &count, &isSlashEnd);
 
-    if (strlen(directions[count - 1]) > 32) { //basename
+    if (strlen(directions[count - 1]) > 32) { // basename
         for (int i = 0; i < count; ++i) free(directions[i]);
         free(pathnameSimplified);
         g_error = ENOENT;
@@ -373,27 +367,27 @@ int rmkdir(const char *pathname) {
     }
 
     node *temp = malloc(sizeof(node));
-    temp->type = DNODE;
-    temp->dirents = NULL;
-    temp->content = NULL;
-    temp->nrde = 0;
-    temp->name = strdup(directions[count - 1]);
-    temp->size = 0;
+    *temp = (node) {
+            .type = DNODE,
+            .nrde = 0,
+            .size = 0,
+            .upper = NULL,
+            .dirents = NULL,
+            .content = NULL,
+            .name = strdup(directions[count - 1]),
+    };
 
-    if (count == 1) { //below root
-        root->nrde++;
-        root->dirents = realloc(root->dirents, root->nrde * sizeof(node));
+    if (count == 1) { // below root
+        root->dirents = realloc(root->dirents, ++(root->nrde) * sizeof(node));
         root->dirents[root->nrde - 1] = temp;
         temp->upper = root;
-
     } else {
         char *upperName = strdup(pathnameSimplified);
-        memset(&upperName[strlen(pathnameSimplified) - strlen(directions[count - 1]) - 1], 0,
-               strlen(directions[count - 1]) + 1);
+        upperName[strlen(pathnameSimplified) - strlen(directions[count - 1]) - 1] = 0;
 
         node *upperNode = FindNode(upperName, true);
-        if (upperNode == NULL || upperNode->type == FNODE) {//enoent or enotdir
-            if (upperNode != NULL && upperNode->type == FNODE)g_error = ENOTDIR;
+        if (upperNode == NULL || upperNode->type == FNODE) { // enoent or enotdir
+            g_error = upperNode == NULL ? ENOENT : ENOTDIR;
             for (int i = 0; i < count; ++i) free(directions[i]);
             free(upperName);
             free(pathnameSimplified);
@@ -402,29 +396,24 @@ int rmkdir(const char *pathname) {
             return -1;
         }
 
-        upperNode->nrde++;
-        upperNode->dirents = realloc(upperNode->dirents, upperNode->nrde * sizeof(node));
+        upperNode->dirents = realloc(upperNode->dirents, ++(upperNode->nrde) * sizeof(node));
         upperNode->dirents[upperNode->nrde - 1] = temp;
         temp->upper = upperNode;
-
         free(upperName);
     }
 
     for (int i = 0; i < count; ++i) free(directions[i]);
     free(pathnameSimplified);
-
     return 0;
 }
 
 int rrmdir(const char *pathname) {
-    if (pathname == NULL)return -1;
+    if (pathname == NULL) {
+        return -1;
+    }
 
     node *temp = FindNode(pathname, false);
-    if (temp == NULL) { //enoent
-        return -1;
-    } else if (temp->type == FNODE || temp->nrde != 0) { //enotdir or enotempty
-        return -1;
-    } else if (strcmp("/", pathname) == 0) {//eacces
+    if (temp == NULL || temp->type == FNODE || temp->nrde != 0) {
         return -1;
     }
 
@@ -438,7 +427,8 @@ int rrmdir(const char *pathname) {
             break;
         }
     }
-    for (int i = location; i < upper->nrde - 1; ++i) {//move
+
+    for (int i = location; i < upper->nrde - 1; ++i) { // move
         upper->dirents[i] = upper->dirents[i + 1];
     }
     upper->nrde--;
@@ -446,12 +436,12 @@ int rrmdir(const char *pathname) {
 }
 
 int runlink(const char *pathname) {
-    if (pathname == NULL) return -1;
+    if (pathname == NULL) {
+        return -1;
+    }
 
     node *temp = FindNode(pathname, false);
-    if (temp == NULL) {//enoent
-        return -1;
-    } else if (temp->type == DNODE) {//eisdir
+    if (temp == NULL || temp->type == DNODE) { // enoent or eisdir
         return -1;
     }
 
@@ -460,15 +450,14 @@ int runlink(const char *pathname) {
     for (int i = 0; i < upper->nrde; ++i) {
         if (strcmp(upper->dirents[i]->name, temp->name) == 0) {
             free(temp->name);
-            if (temp->content != NULL) {
-                free(temp->content);
-            }
+            free(temp->content == NULL ? NULL : temp->content);
             free(upper->dirents[i]);
             location = i;
             break;
         }
     }
-    for (int i = location; i < upper->nrde - 1; ++i) {//move
+
+    for (int i = location; i < upper->nrde - 1; ++i) { // move
         upper->dirents[i] = upper->dirents[i + 1];
     }
     upper->nrde--;
@@ -476,47 +465,48 @@ int runlink(const char *pathname) {
 }
 
 void init_ramfs() {
-    //root
     node *temp = malloc(sizeof(node));
-    if (temp == NULL) return;
-
-    temp->type = DNODE;
-    temp->dirents = NULL;
-    temp->content = NULL;
-    temp->upper = NULL;
-    temp->nrde = 0;
-    temp->name = malloc(2 * sizeof(char));
-    strcpy(temp->name, "/");
-    temp->size = 0;
+    *temp = (node) {
+            .type = DNODE,
+            .nrde = 0,
+            .size = 0,
+            .upper = NULL,
+            .dirents = NULL,
+            .content = NULL,
+            .name = strdup("/"),
+    };
     root = temp;
 
-    //FD
     for (int i = 0; i < NRFD; ++i) {
-        fdesc[i].offset = 0;
-        fdesc[i].used = false;
-        fdesc[i].f = NULL;
-        fdesc[i].flags = 0;
+        fdesc[i] = (FD) {
+                .offset = 0,
+                .f = NULL,
+                .flags = 0,
+                .used = false
+        };
     }
 }
 
-void FreeNode(node *nd) {
-    if (nd == NULL)return;
-
-    if (nd->type == FNODE) {
-        if (nd->content != NULL)free(nd->content);
-        free(nd->name);
-        free(nd);
-    } else {
-        for (int i = 0; i < nd->nrde; ++i) {
-            FreeNode(nd->dirents[i]);
-        }
-        free(nd->name);
-        free(nd);
+void FreeNode(node *node) {
+    if (node == NULL) {
+        return;
     }
+
+    if (node->type == FNODE) {
+        free(node->content == NULL ? NULL : node->content);
+    } else {
+        for (int i = 0; i < node->nrde; ++i) FreeNode(node->dirents[i]);
+    }
+
+    free(node->name);
+    free(node);
 }
 
 void close_ramfs() {
-    if (root == NULL)return;
+    if (root == NULL) {
+        return;
+    }
+
     FreeNode(root);
     root = NULL;
 }
