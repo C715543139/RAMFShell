@@ -184,8 +184,7 @@ void init_shell() {
 
     if (bash == NULL)return;
 
-    char *buf = malloc((bash->size + 1) * sizeof(char));
-    ReduceSlashes(bash->content, buf);
+    char *buf = ReduceSlashes(bash->content);
 
     char *temp = calloc(bash->size + 1, (bash->size + 1) * sizeof(char));
     char *p = strstr(buf, "export PATH=");
