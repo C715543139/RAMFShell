@@ -1,5 +1,9 @@
 #include "ramfs.h"
 #include "shell.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <stdbool.h>
 
 #ifndef ONLINE_JUDGE
 #define print(...) printf("\033[31m");printf(__VA_ARGS__);printf("\033[0m");
@@ -7,10 +11,7 @@
 #define print(...)
 #endif
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
+#define $PATH (input[i] == '$' && input[i + 1] == 'P' && input[i + 2] == 'A' && input[i + 3] == 'T' && input[i + 4] == 'H')
 
 char *PATH = NULL;
 
@@ -36,7 +37,7 @@ int sls(const char *pathname) {
         for (int i = 0; i < dir->nrde; ++i) {
             printf("%s ", dir->dirents[i]->name);
         }
-        if(dir->nrde != 0)printf("\n");
+        if (dir->nrde != 0) printf("\n");
     }
     return 0;
 }
@@ -52,10 +53,7 @@ int scat(const char *pathname) {
             printf("cat: %s: Not a directory\n", pathname);
         }
         return 1;
-    } else if (file->type == DNODE) {
-        printf("cat: %s: Is a directory\n", pathname);
-        return 1;
-    } else if (file->type == FNODE && pathname[strlen(pathname) - 1] == '/') {
+    } else if (file->type == DNODE || (file->type == FNODE && pathname[strlen(pathname) - 1] == '/')) {
         printf("cat: %s: Is a directory\n", pathname);
         return 1;
     }
@@ -63,7 +61,7 @@ int scat(const char *pathname) {
     for (int i = 0; i < file->size; ++i) {
         printf("%c", ((char *) (file->content))[i]);
     }
-    if(file->size != 0)printf("\n");
+    if (file->size != 0) printf("\n");
     return 0;
 }
 
@@ -73,10 +71,10 @@ int smkdir(const char *pathname) {
     if (rmkdir(pathname) == -1) {
         if (CheckErrorType() == 0) {
             printf("mkdir: cannot create directory '%s': Not a directory\n", pathname);
-        } else if (CheckErrorType() == 2) {
-            printf("mkdir: cannot create directory '%s': No such file or directory\n", pathname);
         } else if (CheckErrorType() == 1) {
             printf("mkdir: cannot create directory '%s': File exists\n", pathname);
+        } else if (CheckErrorType() == 2) {
+            printf("mkdir: cannot create directory '%s': No such file or directory\n", pathname);
         }
         return 1;
     }
@@ -94,7 +92,7 @@ int stouch(const char *pathname) {
                 printf("touch: cannot touch '%s': Not a directory\n", pathname);
             } else if (CheckErrorType() == 2) {
                 printf("touch: cannot touch '%s': No such file or directory\n", pathname);
-            } else if(CheckErrorType() == 3){
+            } else if (CheckErrorType() == 3) {
                 printf("No such file or directory\n");
             }
             return 1;
@@ -124,11 +122,10 @@ int secho(const char *content) {
             output[lenOut - 1] = input[i + 1];
             output[lenOut] = 0;
             i += 2;
-        } else if (input[i] == '$' && input[i + 1] == 'P' && input[i + 2] == 'A' && input[i + 3] == 'T' &&
-                    input[i + 4] == 'H') {
+        } else if ($PATH) {
             lenOut += strlen(PATH);
             output = realloc(output, (lenOut + 1) * sizeof(char));
-            strcat(output,PATH);
+            strcat(output, PATH);
             i += 5;
         } else {
             lenOut++;
@@ -138,14 +135,16 @@ int secho(const char *content) {
             i++;
         }
     }
-    printf("%s\n",output);
+    printf("%s\n", output);
     return 0;
 }
 
 int swhich(const char *cmd) {
     print("which %s\n", cmd);
 
-    if (PATH == NULL)return 1;
+    if (PATH == NULL){
+        return 1;
+    }
 
     char *directions[MAX_LEN];
     int count = 0, p = 0, q = 0;
@@ -154,9 +153,8 @@ int swhich(const char *cmd) {
         char *temp = calloc(p - q + 1, (p - q + 1) * sizeof(char));
         strncpy(temp, &PATH[q], p - q);
         directions[count++] = temp;
-        if (PATH[p] == 0)break;
-        p++;
-        q = p;
+        if (PATH[p] == 0) break;
+        q = ++p;
     }
 
     int found = -1;
@@ -167,7 +165,7 @@ int swhich(const char *cmd) {
             break;
         }
     }
-    if (found != -1) {
+    if (found > -1) {
         printf("%s/%s\n", directions[found], cmd);
         for (int i = 0; i < count; ++i) free(directions[i]);
         return 0;
@@ -180,11 +178,11 @@ int swhich(const char *cmd) {
 
 void init_shell() {
     node *bash = FindNode("/home/ubuntu/.bashrc", true);
-
-    if (bash == NULL)return;
+    if (bash == NULL){
+        return;
+    }
 
     char *buf = ReduceSlashes(bash->content);
-
     char *temp = calloc(bash->size + 1, (bash->size + 1) * sizeof(char));
     char *p = strstr(buf, "export PATH=");
     while (p != NULL) {
@@ -193,9 +191,9 @@ void init_shell() {
 
         if (q == NULL) {
             q = p;
-            while (*q != 0 && *q != '\n')q++;
+            while (*q != 0 && *q != '\n') q++;
         } else {
-            while (*(q - 1) == '\n')q--;
+            while (*(q - 1) == '\n') q--;
         }
 
         if (*p == '$') {
@@ -212,8 +210,8 @@ void init_shell() {
 
         p = strstr(p, "export PATH=");
     }
-    PATH = temp;
 
+    PATH = temp;
     free(buf);
 }
 
