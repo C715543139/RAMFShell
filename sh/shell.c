@@ -118,7 +118,7 @@ int secho(const char *content) {
     char *output = NULL;
     size_t lenOut = 0;
     strcpy(input, content);
-    for (int i = 0; i < lenCon - 5;) {
+    for (int i = 0; i < lenCon + 5;) {
         if (input[i] == '\\') {
             lenOut++;
             output = realloc(output, (lenOut + 1) * sizeof(char));

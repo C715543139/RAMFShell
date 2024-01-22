@@ -6,17 +6,17 @@
 #include <string.h>
 #include "limits.h"
 
-node *root = NULL;
-
 #define NRFD 8192
 FD fdesc[NRFD];
 
+node *root = NULL;
+
 enum {
     ENOTDIR, EEXIST, ENOENT,SPECIAL //0,1,2,3
-} Errors;
+} g_error;
 
 int CheckErrorType() {
-    return Errors;
+    return g_error;
 }
 
 char *strdup(const char *content) {
@@ -100,11 +100,11 @@ node *FindNode(const char *pathname, bool simplified) {
     for (int i = 0; i < count; ++i) {
         if (now == NULL || (now->type == DNODE && now->nrde == 0)) {
             now = NULL;
-            Errors = ENOENT;
+            g_error = ENOENT;
             break;
         } else if (now->type == FNODE) {
             now = NULL;
-            Errors = ENOTDIR;
+            g_error = ENOTDIR;
             break;
         }
 
@@ -138,7 +138,7 @@ int ropen(const char *pathname, int flags) {
             for (int i = 0; pathnameSimplified[i] != 0; ++i) { //einval
                 if (isalnum(pathnameSimplified[i]) == 0 && pathnameSimplified[i] != '.' && pathnameSimplified[i] != '/') {
                     free(pathnameSimplified);
-                    Errors = ENOENT;
+                    g_error = ENOENT;
                     return -1;
                 }
             }
@@ -151,7 +151,7 @@ int ropen(const char *pathname, int flags) {
             if (isSlashEnd || strlen(directions[count - 1]) > 32) { //basename
                 for (int i = 0; i < count; ++i) free(directions[i]);
                 free(pathnameSimplified);
-                Errors = SPECIAL;
+                g_error = SPECIAL;
                 return -1;
             }
 
@@ -175,7 +175,7 @@ int ropen(const char *pathname, int flags) {
                 node *upperNode = FindNode(upperName, true);
                 if (upperNode == NULL || upperNode->type == FNODE) {//enoent or enotdir
                     if (upperNode != NULL && upperNode->type == FNODE) {
-                        Errors = ENOTDIR;
+                        g_error = ENOTDIR;
                     }
                     for (int i = 0; i < count; ++i) free(directions[i]);
                     free(upperName);
@@ -205,7 +205,7 @@ int ropen(const char *pathname, int flags) {
     if (file->type == DNODE && rw != 0) {
         return -1;
     } else if(file->type == FNODE && pathname[strlen(pathname) - 1] == '/'){
-        Errors = ENOENT;
+        g_error = ENOENT;
         return -1;
     }
 
@@ -347,14 +347,14 @@ int rmkdir(const char *pathname) {
 
     if (FindNode(pathnameSimplified, true) != NULL) { //eexist
         free(pathnameSimplified);
-        Errors = EEXIST;
+        g_error = EEXIST;
         return -1;
     }
 
     for (int i = 0; pathnameSimplified[i] != 0; ++i) { //einval
         if (isalnum(pathnameSimplified[i]) == 0 && pathnameSimplified[i] != '.' && pathnameSimplified[i] != '/') {
             free(pathnameSimplified);
-            Errors = ENOENT;
+            g_error = ENOENT;
             return -1;
         }
     }
@@ -367,7 +367,7 @@ int rmkdir(const char *pathname) {
     if (strlen(directions[count - 1]) > 32) { //basename
         for (int i = 0; i < count; ++i) free(directions[i]);
         free(pathnameSimplified);
-        Errors = ENOENT;
+        g_error = ENOENT;
         return -1;
     }
 
@@ -391,7 +391,7 @@ int rmkdir(const char *pathname) {
 
         node *upperNode = FindNode(upperName, true);
         if (upperNode == NULL || upperNode->type == FNODE) {//enoent or enotdir
-            if (upperNode != NULL && upperNode->type == FNODE)Errors = ENOTDIR;
+            if (upperNode != NULL && upperNode->type == FNODE)g_error = ENOTDIR;
             for (int i = 0; i < count; ++i) free(directions[i]);
             free(upperName);
             free(pathnameSimplified);
