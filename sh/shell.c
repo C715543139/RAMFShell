@@ -142,7 +142,7 @@ int secho(const char *content) {
 int swhich(const char *cmd) {
     print("which %s\n", cmd);
 
-    if (PATH == NULL){
+    if (PATH == NULL) {
         return 1;
     }
 
@@ -178,7 +178,7 @@ int swhich(const char *cmd) {
 
 void init_shell() {
     node *bash = FindNode("/home/ubuntu/.bashrc", true);
-    if (bash == NULL){
+    if (bash == NULL) {
         return;
     }
 
