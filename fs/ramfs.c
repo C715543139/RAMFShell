@@ -62,7 +62,7 @@ void SplitPathname(char **directions, const char *pathnameSimplified, int *count
 }
 
 char *ReduceSlashes(const char *input) {
-    char *output = calloc(MAX_LEN, MAX_LEN * sizeof(char));
+    char *output = calloc((strlen(input) + 10), (strlen(input) + 10) * sizeof(char));
     int i, j = 0;
     for (i = 0; input[i] != 0; ++i) {
         if (input[i] == '/' && input[i + 1] == '/') {
