@@ -32,6 +32,7 @@ int main() {
 
     init_shell();
     assert(stouch("/0000000000000000000000000000000000000000000000000000")==1);
+    sls("");
     close_shell();
     close_ramfs();
     return 0;
